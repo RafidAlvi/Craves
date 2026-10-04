@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CRAVES (ক্র্যাভস্) | Bite. Sip. Repeat.</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Baloo+Da+2:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cravesRed: '#b91c1c',
+                        cravesDarkRed: '#991b1b',
+                        cravesCream: '#fdfbf7',
+                        cravesSand: '#f3ede2',
+                        cravesBrown: '#451a03',
+                        cravesYellow: '#f59e0b'
+                    },
+                    fontFamily: {
+                        poppins: ['Poppins', 'sans-serif'],
+                        bangla: ['Baloo Da 2', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #fdfbf7;
+            color: #451a03;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .brand-pattern {
+            background-color: #991b1b;
+            background-image: radial-gradient(#b91c1c 1px, transparent 1px), radial-gradient(#b91c1c 1px, #991b1b 1px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+        }
+        .food-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 25px -5px rgba(153, 27, 27, 0.15);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f3ede2;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #b91c1c;
+            border-radius: 3px;
+        }
+        .pulse-badge {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.03); }
+        }
+
+        /* Splash Screen Styles */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background-color: #991b1b;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        #splash-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .splash-content {
+            text-align: center;
+            animation: splash-zoom 1.2s ease-out forwards;
+        }
+        @keyframes splash-zoom {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-cravesCream antialiased selection:bg-red-600 selection:text-white pb-24">
+
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen">
+        <div class="splash-content px-6">
+            <div class="w-32 h-32 mx-auto mb-4 rounded-3xl bg-white shadow-2xl p-2 flex items-center justify-center overflow-hidden border-4 border-cravesYellow">
+                <img src="https://scontent.fdac135-1.fna.fbcdn.net/v/t39.30808-6/480665971_122102656923394254_8944521406560938637_n.jpg?stp=dst-jpg_s960x960_tt6&_nc_cat=105&ccb=1-3&_nc_to=103&_nc_sid=aa7b47&_nc_ohc=JvS6h_J1z1QQAX9...&_nc_zt=23&_nc_ht=scontent.fdac135-1.fna.fbcdn.net&oh=00_AfC..." alt="CRAVES Logo" class="w-full h-full object-cover rounded-2xl" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=400&q=80'">
+            </div>
+            <h1 class="text-3xl font-black text-white tracking-wider mb-1">CRAVES</h1>
+            <p class="text-xs text-red-200 tracking-widest font-bold uppercase">Bite. Sip. Repeat.</p>
+        </div>
+    </div>
+
+    <!-- TOP HEADER STATUS BAR -->
+    <div class="bg-cravesDarkRed text-white text-xs py-2 px-3 font-medium flex items-center justify-between shadow-inner">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-clock text-cravesYellow animate-spin" style="animation-duration: 8s;"></i>
+            <span>Open: <strong>5 PM – 11 PM</strong></span>
+            <span id="store-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500 text-white uppercase pulse-badge">OPEN</span>
+        </div>
+        <div class="flex items-center gap-2.5">
+            <a href="https://www.instagram.com/craves_cafe.bd" target="_blank" class="w-6 h-6 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center text-white"><i class="fa-brands fa-instagram text-[10px]"></i></a>
+            <a href="https://facebook.com/craves.cafe.bd" target="_blank" class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white"><i class="fa-brands fa-facebook-f text-[10px]"></i></a>
+            <a href="https://share.google/wNF9160jFUJIsU4qf" target="_blank" class="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-white"><i class="fa-solid fa-map-location-dot text-[10px]"></i></a>
+            <a href="https://wa.me/8801540340852" target="_blank" class="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center text-white"><i class="fa-brands fa-whatsapp text-[10px]"></i></a>
+        </div>
+    </div>
+
+    <!-- APP NAVBAR -->
+    <nav class="sticky top-0 z-40 bg-cravesCream/95 backdrop-blur-md border-b border-red-900/10 px-4 py-3 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-cravesRed flex items-center justify-center shadow overflow-hidden">
+                <img src="https://scontent.fdac135-1.fna.fbcdn.net/v/t39.30808-6/480665971_122102656923394254_8944521406560938637_n.jpg?stp=dst-jpg_s960x960_tt6&_nc_cat=105&ccb=1-3&_nc_to=103&_nc_sid=aa7b47&_nc_ohc=JvS6h_J1z1QQAX9...&_nc_zt=23&_nc_ht=scontent.fdac135-1.fna.fbcdn.net&oh=00_AfC..." alt="Logo" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=100&q=80'">
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-wider text-cravesRed leading-none">CRAVES</h1>
+                <span class="text-xs font-bold font-bangla text-cravesBrown tracking-wider">ক্র্যাভস্ • মিরপুর ১০</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- Cart Button with Badge -->
+            <button onclick="toggleCartDrawer()" class="relative bg-cravesSand hover:bg-red-100 text-cravesRed w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-95">
+                <i class="fa-solid fa-cart-shopping text-base"></i>
+                <span id="cart-counter" class="absolute -top-1 -right-1 bg-cravesRed text-white text-[10px] w-4 h-4 rounded-full font-bold flex items-center justify-center shadow">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- APP HERO BANNER -->
+    <header class="brand-pattern text-white p-5 mx-4 mt-4 rounded-3xl shadow-xl relative overflow-hidden text-center">
+        <div class="absolute inset-0 bg-black/10"></div>
+        <div class="relative z-10">
+            <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-bold tracking-wider inline-block mb-2">
+                <i class="fa-solid fa-fire text-cravesYellow mr-1"></i> Mirpur 10 Fast Food & Boba
+            </span>
+            <h2 class="text-3xl font-black tracking-tight mb-1">BITE. SIP. REPEAT.</h2>
+            <p class="text-xs text-red-100 max-w-xs mx-auto mb-4">Burgers, fries, sub sandwiches & cold coffee delivered instantly via WhatsApp!</p>
+            <div class="flex items-center justify-center gap-2">
+                <a href="#menu" class="bg-white text-cravesRed font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition-transform">
+                    <i class="fa-solid fa-utensils mr-1"></i> View Menu
+                </a>
+                <a href="https://wa.me/8801540340852?text=Hi%20Craves!%20I%20want%20to%20order." target="_blank" class="bg-green-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition-transform flex items-center gap-1.5">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- QUICK CATEGORY TABS -->
+    <div class="px-4 mt-6">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-black text-cravesBrown text-lg">Menu Items</h3>
+            <span class="text-xs text-gray-500 font-medium">Tap to add</span>
+        </div>
+    </div>
+
+    <!-- MENU LIST SECTION -->
+    <section id="menu" class="px-4 space-y-3.5">
+        <!-- Item 1 -->
+        <div class="food-card bg-white p-3.5 rounded-2xl shadow-sm border border-red-900/10 flex items-center justify-between gap-3 transition-all">
+            <div class="w-20 h-20 rounded-xl bg-cravesSand overflow-hidden flex-shrink-0 relative">
+                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=300&q=80" alt="Burger Combo" class="w-full h-full object-cover">
+                <span class="absolute bottom-1 right-1 bg-cravesRed text-white text-[10px] font-black px-1.5 py-0.5 rounded">৳110</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="font-extrabold text-cravesBrown text-sm truncate">Burger + Cold Coffee Combo</h4>
+                <p class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">Juicy burger & refreshing cold coffee (+৳20 for Boba)</p>
+                <div class="mt-2 flex items-center justify-between">
+                    <span class="text-xs font-black text-cravesRed">৳110</span>
+                    <button onclick="addToCart('Burger + Cold Coffee Combo', 110)" class="bg-cravesRed hover:bg-cravesDarkRed text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow active:scale-95 transition-transform flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="food-card bg-white p-3.5 rounded-2xl shadow-sm border border-red-900/10 flex items-center justify-between gap-3 transition-all">
+            <div class="w-20 h-20 rounded-xl bg-cravesSand overflow-hidden flex-shrink-0 relative">
+                <img src="https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=300&q=80" alt="Grilled Sandwich" class="w-full h-full object-cover">
+                <span class="absolute bottom-1 right-1 bg-cravesRed text-white text-[10px] font-black px-1.5 py-0.5 rounded">৳90</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="font-extrabold text-cravesBrown text-sm truncate">Grilled Sandwich</h4>
+                <p class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">Warm, perfectly pressed cheesy grilled sandwich</p>
+                <div class="mt-2 flex items-center justify-between">
+                    <span class="text-xs font-black text-cravesRed">৳90</span>
+                    <button onclick="addToCart('Grilled Sandwich', 90)" class="bg-cravesRed hover:bg-cravesDarkRed text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow active:scale-95 transition-transform flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="food-card bg-white p-3.5 rounded-2xl shadow-sm border border-red-900/10 flex items-center justify-between gap-3 transition-all">
+            <div class="w-20 h-20 rounded-xl bg-cravesSand overflow-hidden flex-shrink-0 relative">
+                <img src="https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&w=300&q=80" alt="Chicken Sub" class="w-full h-full object-cover">
+                <span class="absolute bottom-1 right-1 bg-cravesRed text-white text-[10px] font-black px-1.5 py-0.5 rounded">৳140</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="font-extrabold text-cravesBrown text-sm truncate">Chicken Sub Sandwich</h4>
+                <p class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">Tender chicken, signature sauces & fresh veggies</p>
+                <div class="mt-2 flex items-center justify-between">
+                    <span class="text-xs font-black text-cravesRed">৳140</span>
+                    <button onclick="addToCart('Chicken Sub Sandwich', 140)" class="bg-cravesRed hover:bg-cravesDarkRed text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow active:scale-95 transition-transform flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="food-card bg-white p-3.5 rounded-2xl shadow-sm border border-red-900/10 flex items-center justify-between gap-3 transition-all">
+            <div class="w-20 h-20 rounded-xl bg-cravesSand overflow-hidden flex-shrink-0 relative">
+                <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80" alt="Meatbox" class="w-full h-full object-cover">
+                <span class="absolute bottom-1 right-1 bg-cravesRed text-white text-[10px] font-black px-1.5 py-0.5 rounded">৳130</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="font-extrabold text-cravesBrown text-sm truncate">Meatbox</h4>
+                <p class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">Loaded fries, chicken chunks & secret sauce</p>
+                <div class="mt-2 flex items-center justify-between">
+                    <span class="text-xs font-black text-cravesRed">৳130</span>
+                    <button onclick="addToCart('Meatbox', 130)" class="bg-cravesRed hover:bg-cravesDarkRed text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow active:scale-95 transition-transform flex items-center gap-1">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item 5 -->
+        <div class="food-card bg-white p-3.5 rounded-2xl shadow-sm border border-red-900/10 flex items-center justify-between gap-3 transition-all">
+            <div class="w-20 h-20 rounded-xl bg-cravesSand overflow-hidden flex-shrink-0 relative">
+                <img src="https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=300&q=80" alt="Nachos" class="w-full h-full object-cover">
+                <span class="absolute bottom-1 right-1 bg-cravesRed text-white text-[10px] font-black px-1.5 py-0.5 rounded">৳60+</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="font-extrabold text-cravesBrown text-sm truncate">Nachos (Small / Large)</h4>
+                <p class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">Crispy tortilla chips with savory sauces</p>
+                <div class="mt-2 flex items-center justify-between gap-2">
+                    <span class="text-xs font-black text-cravesRed">৳60 - ৳100</span>
+                    <div class="flex gap-1">
+                        <button onclick="addToCart('Nachos (Small)', 60)" class="bg-cravesRed text-white text-[10px] font-bold px-2 py-1 rounded shadow">S(60)</button>
+                        <button onclick="addToCart('Nachos (Large)', 100)" class="bg-cravesRed text-white text-[10px] font-bold px-2 py-1 rounded shadow">L(100)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item 6 -->
+        <div class="food-card bg-white p-3.5 rounded-2xl shadow-sm border border-red-900/10 flex items-center justify-between gap-3 transition-all">
+            <div class="w-20 h-20 rounded-xl bg-cravesSand overflow-hidden flex-shrink-0 relative">
+                <img src="https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=300&q=80" alt="French Fries" class="w-full h-full object-cover">
+                <span class="absolute bottom-1 right-1 bg-cravesRed text-white text-[10px] font-black px-1.5 py-0.5 rounded">৳50+</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="font-extrabold text-cravesBrown text-sm truncate">French Fries (Small / Large)</h4>
+                <p class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">Hot, golden potato fries with dipping sauce</p>
+                <div class="mt-2 flex items-center justify-between gap-2">
+                    <span class="text-xs font-black text-cravesRed">৳50 - ৳90</span>
+                    <div class="flex gap-1">
+                        <button onclick="addToCart('French Fries (Small)', 50)" class="bg-cravesRed text-white text-[10px] font-bold px-2 py-1 rounded shadow">S(50)</button>
+                        <button onclick="addToCart('French Fries (Large)', 90)" class="bg-cravesRed text-white text-[10px] font-bold px-2 py-1 rounded shadow">L(90)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LOCATION & CONTACT CARD -->
+    <section class="px-4 mt-8">
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-red-900/10">
+            <h3 class="font-black text-cravesBrown text-base mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-map-pin text-cravesRed"></i> Outlet & Location
+            </h3>
+            <p class="text-xs text-gray-600 mb-3"><strong>4/8 Block-C, Mirpur 10, Dhaka</strong><br>Open Daily: 5:00 PM – 11:00 PM</p>
+            <div class="flex items-center gap-2">
+                <a href="https://share.google/wNF9160jFUJIsU4qf" target="_blank" class="flex-1 bg-cravesSand text-cravesBrown text-xs font-bold py-2.5 rounded-xl text-center shadow-sm">
+                    <i class="fa-solid fa-map-location-dot mr-1"></i> Google Map
+                </a>
+                <a href="https://wa.me/8801540340852" target="_blank" class="flex-1 bg-green-600 text-white text-xs font-bold py-2.5 rounded-xl text-center shadow-sm">
+                    <i class="fa-brands fa-whatsapp mr-1"></i> Helpline
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- BOTTOM FIXED CART BAR -->
+    <div id="bottom-cart-bar" class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-red-900/10 p-3.5 z-30 shadow-2xl flex items-center justify-between">
+        <div>
+            <span class="text-[10px] uppercase font-bold text-gray-400 block leading-tight">Total Amount</span>
+            <span id="floating-total" class="text-lg font-black text-cravesRed">৳0</span>
+        </div>
+        <button onclick="toggleCartDrawer()" class="bg-cravesRed hover:bg-cravesDarkRed text-white font-bold text-xs px-6 py-3 rounded-2xl shadow-lg active:scale-95 transition-transform flex items-center gap-2">
+            <i class="fa-solid fa-cart-shopping"></i> View Cart & Order
+        </button>
+    </div>
+
+    <!-- CART / ORDER DRAWER -->
+    <div id="cart-drawer" class="fixed inset-0 z-50 overflow-hidden hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="toggleCartDrawer()"></div>
+        <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
+            <div class="w-screen max-w-sm bg-cravesCream shadow-2xl flex flex-col justify-between">
+                <!-- Header -->
+                <div class="p-4 bg-cravesRed text-white flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cart-shopping text-lg"></i>
+                        <h3 class="text-base font-bold">Your Order Cart</h3>
+                    </div>
+                    <button onclick="toggleCartDrawer()" class="text-white p-2">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Cart Items List -->
+                <div id="cart-items-container" class="p-4 overflow-y-auto flex-1 space-y-3">
+                    <div class="text-center text-gray-500 py-12">
+                        <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-gray-300"></i>
+                        <p class="text-sm font-medium">Your cart is empty.</p>
+                    </div>
+                </div>
+
+                <!-- Footer Checkout -->
+                <div class="p-4 bg-white border-t border-red-900/10 shadow-lg">
+                    <div class="flex items-center justify-between mb-3 text-base font-black text-cravesBrown">
+                        <span>Total:</span>
+                        <span id="cart-total" class="text-cravesRed">৳0</span>
+                    </div>
+                    <button onclick="checkoutWhatsApp()" class="w-full bg-green-600 hover:bg-green-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-sm active:scale-95 transition-transform">
+                        <i class="fa-brands fa-whatsapp text-xl"></i> Send Order on WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // Hide Splash Screen after page loads
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.classList.add('fade-out');
+                }
+            }, 800); // 0.8s delay for smooth entrance
+        });
+
+        function checkStoreStatus() {
+            const badge = document.getElementById('store-status-badge');
+            const now = new Date();
+            const hours = now.getHours();
+            const isOpen = hours >= 17 && hours < 23;
+            if (isOpen) {
+                badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-500 text-white uppercase pulse-badge";
+                badge.innerText = "OPEN";
+            } else {
+                badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-600 text-white uppercase";
+                badge.innerText = "OPENS 5 PM";
+            }
+        }
+        checkStoreStatus();
+
+        let cart = [];
+
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('cart-drawer');
+            drawer.classList.toggle('hidden');
+            renderCart();
+        }
+
+        function addToCart(name, price) {
+            const existing = cart.find(item => item.name === name);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ name, price, qty: 1 });
+            }
+            updateCartCounter();
+            showToast(`Added ${name}`);
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartCounter();
+            renderCart();
+        }
+
+        function updateQuantity(index, change) {
+            cart[index].qty += change;
+            if (cart[index].qty <= 0) {
+                cart.splice(index, 1);
+            }
+            updateCartCounter();
+            renderCart();
+        }
+
+        function updateCartCounter() {
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cart-counter').innerText = totalItems;
+            
+            let total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            document.getElementById('floating-total').innerText = `৳${total}`;
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const totalEl = document.getElementById('cart-total');
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-12">
+                        <i class="fa-solid fa-basket-shopping text-3xl mb-2 text-gray-300"></i>
+                        <p class="text-sm font-medium">Your cart is empty.</p>
+                    </div>
+                `;
+                totalEl.innerText = '৳0';
+                return;
+            }
+
+            let html = '';
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                const itemTotal = item.price * item.qty;
+                total += itemTotal;
+                html += `
+                    <div class="flex items-center justify-between bg-cravesSand p-3 rounded-xl border border-red-900/5">
+                        <div class="flex-1 pr-2 min-w-0">
+                            <h4 class="font-bold text-cravesBrown text-xs truncate">${item.name}</h4>
+                            <p class="text-[11px] text-cravesRed font-bold mt-0.5">৳${item.price} each</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="updateQuantity(${index}, -1)" class="w-7 h-7 rounded bg-white text-cravesBrown font-bold text-xs shadow-sm flex items-center justify-center">-</button>
+                            <span class="font-bold text-xs w-4 text-center">${item.qty}</span>
+                            <button onclick="updateQuantity(${index}, 1)" class="w-7 h-7 rounded bg-white text-cravesBrown font-bold text-xs shadow-sm flex items-center justify-center">+</button>
+                            <button onclick="removeFromCart(${index})" class="ml-1 text-red-500 p-1">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            totalEl.innerText = `৳${total}`;
+        }
+
+        function checkoutWhatsApp() {
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+
+            let message = "Hi CRAVES! I would like to place an order:%0A%0A";
+            let total = 0;
+
+            cart.forEach(item => {
+                const itemTotal = item.price * item.qty;
+                total += itemTotal;
+                message += `• ${item.name} x ${item.qty} = ৳${itemTotal}%0A`;
+            });
+
+            message += `%0A*Total: ৳${total}*%0A*Location:* Mirpur 10 / Takeaway`;
+
+            window.open(`https://wa.me/8801540340852?text=${message}`, '_blank');
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-20 right-4 z-50 bg-cravesBrown text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-bold flex items-center gap-2';
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-green-400"></i> ${msg}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+    </script>
+</body>
+</html>

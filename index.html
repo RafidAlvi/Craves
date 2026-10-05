@@ -90,6 +90,22 @@
             0% { transform: scale(0.8); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
+
+        /* Menu Slideshow & Zoom Styles */
+        .menu-slide {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+        .menu-slide.active {
+            display: block;
+            opacity: 1;
+            animation: slideFadeIn 0.8s ease-in-out forwards;
+        }
+        @keyframes slideFadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
     </style>
 </head>
 <body class="bg-cravesCream antialiased selection:bg-red-600 selection:text-white pb-24">
@@ -100,8 +116,6 @@
             <div class="w-32 h-32 mx-auto mb-4 rounded-3xl bg-white shadow-2xl p-2 flex items-center justify-center overflow-hidden border-4 border-cravesYellow">
                 <img src="https://i.postimg.cc/bwW4F955/craves.png" alt="CRAVES Logo" class="w-full h-full object-cover rounded-2xl" onerror="this.src='https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=400&q=80'">
             </div>
-<!-- <h1 class="text-3xl font-black text-white tracking-wider mb-1">CRAVES</h1>
-            <p class="text-xs text-red-200 tracking-widest font-bold uppercase">Bite. Sip. Repeat.</p> -->
         </div>
     </div>
 
@@ -151,8 +165,8 @@
             <h2 class="text-3xl font-black tracking-tight mb-1">BITE. SIP. REPEAT.</h2>
             <p class="text-xs text-red-100 max-w-xs mx-auto mb-4">Burgers, fries, sub sandwiches & cold coffee delivered instantly via WhatsApp!</p>
             <div class="flex items-center justify-center gap-2">
-                <a href="#menu" class="bg-white text-cravesRed font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition-transform">
-                    <i class="fa-solid fa-utensils mr-1"></i> View Menu
+                <a href="#menu-slideshow-section" class="bg-white text-cravesRed font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition-transform">
+                    <i class="fa-solid fa-book-open mr-1"></i> View Menu
                 </a>
                 <a href="https://wa.me/8801540340852?text=Hi%20Craves!%20I%20want%20to%20order." target="_blank" class="bg-green-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md active:scale-95 transition-transform flex items-center gap-1.5">
                     <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
@@ -161,16 +175,87 @@
         </div>
     </header>
 
-    <!-- QUICK CATEGORY TABS -->
-    <div class="px-4 mt-6">
+    <!-- NEW MENU SLIDESHOW SECTION -->
+    <section id="menu-slideshow-section" class="px-4 mt-8">
         <div class="flex items-center justify-between mb-3">
-            <h3 class="font-black text-cravesBrown text-lg">Menu Items</h3>
+            <div>
+                <h3 class="font-black text-cravesBrown text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-utensils text-cravesRed"></i> Official Menu Slideshow
+                </h3>
+                <p class="text-[11px] text-gray-500">Swipe, animate, or tap any image to zoom in!</p>
+            </div>
+            <div class="flex gap-1.5">
+                <button onclick="prevSlide()" class="w-8 h-8 rounded-full bg-cravesSand hover:bg-cravesRed hover:text-white text-cravesBrown flex items-center justify-center shadow transition-colors">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                <button onclick="nextSlide()" class="w-8 h-8 rounded-full bg-cravesSand hover:bg-cravesRed hover:text-white text-cravesBrown flex items-center justify-center shadow transition-colors">
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Slideshow Container -->
+        <div class="relative bg-white rounded-3xl p-3 shadow-md border border-red-900/10 overflow-hidden">
+            <!-- Slide 1 -->
+            <div class="menu-slide active cursor-pointer group relative rounded-2xl overflow-hidden bg-gray-100" onclick="openLightbox('https://raw.githubusercontent.com/RafidAlvi/Craves/refs/heads/main/craves%20Mirpur%20new%20menu.png')">
+                <img src="https://raw.githubusercontent.com/RafidAlvi/Craves/refs/heads/main/craves%20Mirpur%20new%20menu.png" alt="Craves Mirpur Menu 1" class="w-full h-auto object-contain max-h-[500px] mx-auto transition-transform duration-300 group-hover:scale-105">
+                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span class="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i> Tap to Zoom
+                    </span>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="menu-slide cursor-pointer group relative rounded-2xl overflow-hidden bg-gray-100" onclick="openLightbox('https://raw.githubusercontent.com/RafidAlvi/Craves/refs/heads/main/craves%20Mirpur%20new%20menu%201.png')">
+                <img src="https://raw.githubusercontent.com/RafidAlvi/Craves/refs/heads/main/craves%20Mirpur%20new%20menu%201.png" alt="Craves Mirpur Menu 2" class="w-full h-auto object-contain max-h-[500px] mx-auto transition-transform duration-300 group-hover:scale-105">
+                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span class="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i> Tap to Zoom
+                    </span>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="menu-slide cursor-pointer group relative rounded-2xl overflow-hidden bg-gray-100" onclick="openLightbox('https://raw.githubusercontent.com/RafidAlvi/Craves/refs/heads/main/craves%20Mirpur%20new%20menu%202.png')">
+                <img src="https://raw.githubusercontent.com/RafidAlvi/Craves/refs/heads/main/craves%20Mirpur%20new%20menu%202.png" alt="Craves Mirpur Menu 3" class="w-full h-auto object-contain max-h-[500px] mx-auto transition-transform duration-300 group-hover:scale-105">
+                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span class="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i> Tap to Zoom
+                    </span>
+                </div>
+            </div>
+
+            <!-- Slide Indicators / Dots -->
+            <div class="flex justify-center items-center gap-2 mt-3 pb-1">
+                <button onclick="currentSlide(0)" class="slide-dot w-2.5 h-2.5 rounded-full bg-cravesRed transition-all"></button>
+                <button onclick="currentSlide(1)" class="slide-dot w-2 h-2 rounded-full bg-gray-300 transition-all"></button>
+                <button onclick="currentSlide(2)" class="slide-dot w-2 h-2 rounded-full bg-gray-300 transition-all"></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- LIGHTBOX / ZOOM MODAL -->
+    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex flex-col items-center justify-center p-4">
+        <button onclick="closeLightbox()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+        <div class="relative max-w-4xl max-h-[85vh] overflow-auto flex items-center justify-center">
+            <img id="lightbox-img" src="" alt="Zoomed Menu" class="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl">
+        </div>
+        <p class="text-white/70 text-xs mt-3">Pinch or scroll to zoom / Tap X to close</p>
+    </div>
+
+    <!-- QUICK CATEGORY TABS -->
+    <div class="px-4 mt-8">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-black text-cravesBrown text-lg" id="menu">Quick Add Items</h3>
             <span class="text-xs text-gray-500 font-medium">Tap to add</span>
         </div>
     </div>
 
     <!-- MENU LIST SECTION -->
-    <section id="menu" class="px-4 space-y-3.5">
+    <section class="px-4 space-y-3.5">
         <!-- Item 1 -->
         <div class="food-card bg-white p-3.5 rounded-2xl shadow-sm border border-red-900/10 flex items-center justify-between gap-3 transition-all">
             <div class="w-20 h-20 rounded-xl bg-cravesSand overflow-hidden flex-shrink-0 relative">
@@ -358,7 +443,7 @@
                 if (splash) {
                     splash.classList.add('fade-out');
                 }
-            }, 800); // 0.8s delay for smooth entrance
+            }, 800);
         });
 
         function checkStoreStatus() {
@@ -376,6 +461,67 @@
         }
         checkStoreStatus();
 
+        // Slideshow Logic
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.menu-slide');
+        const dots = document.querySelectorAll('.slide-dot');
+        let slideInterval = setInterval(nextSlide, 5000);
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                if (dots[i]) {
+                    dots[i].classList.remove('bg-cravesRed', 'w-2.5');
+                    dots[i].classList.add('bg-gray-300', 'w-2');
+                }
+            });
+            slides[index].classList.add('active');
+            if (dots[index]) {
+                dots[index].classList.remove('bg-gray-300', 'w-2');
+                dots[index].classList.add('bg-cravesRed', 'w-2.5');
+            }
+        }
+
+        function nextSlide() {
+            currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+            showSlide(currentSlideIndex);
+        }
+
+        function prevSlide() {
+            currentSlideIndex = (currentSlideIndex - 1 + slides.length) % slides.length;
+            showSlide(currentSlideIndex);
+            resetTimer();
+        }
+
+        function currentSlide(index) {
+            currentSlideIndex = index;
+            showSlide(currentSlideIndex);
+            resetTimer();
+        }
+
+        function resetTimer() {
+            clearInterval(slideInterval);
+            slideInterval = setInterval(nextSlide, 5000);
+        }
+
+        // Lightbox Zoom Logic
+        function openLightbox(imgSrc) {
+            const modal = document.getElementById('lightbox-modal');
+            const img = document.getElementById('lightbox-img');
+            img.src = imgSrc;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            clearInterval(slideInterval);
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightbox-modal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            slideInterval = setInterval(nextSlide, 5000);
+        }
+
+        // Cart and Order Logic
         let cart = [];
 
         function toggleCartDrawer() {
@@ -457,7 +603,7 @@
                 `;
             });
 
-            container.innerHTML = html;
+    container.innerHTML = html;
             totalEl.innerText = `৳${total}`;
         }
 
@@ -471,7 +617,7 @@
             let total = 0;
 
             cart.forEach(item => {
-                const itemTotal = item.price * item.qty;
+                let itemTotal = item.price * item.qty;
                 total += itemTotal;
                 message += `• ${item.name} x ${item.qty} = ৳${itemTotal}%0A`;
             });

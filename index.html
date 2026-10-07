@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRAVES (ক্র্যাভস্) | Bite. Sip. Repeat.</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Baloo+Da+2:wght@600;700;800&display=swap" rel="stylesheet">
@@ -91,7 +91,7 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        /* Menu Slideshow & Zoom Styles */
+        /* Menu Slideshow Styles */
         .menu-slide {
             display: none;
             opacity: 0;
@@ -105,6 +105,28 @@
         @keyframes slideFadeIn {
             from { opacity: 0; transform: translateY(10px) scale(0.98); }
             to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Interactive Zoom Image Viewer Container */
+        #zoom-container {
+            touch-action: none;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 75vh;
+        }
+        #lightbox-img {
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+            cursor: grab;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        #lightbox-img:active {
+            cursor: grabbing;
         }
     </style>
 </head>
@@ -175,14 +197,32 @@
         </div>
     </header>
 
-    <!-- NEW MENU SLIDESHOW SECTION -->
+    <!-- QUICK SOCIAL & MAP ICONS BAR -->
+    <section class="px-4 mt-3">
+        <div class="bg-white p-3 rounded-2xl shadow-sm border border-red-900/10 flex items-center justify-around gap-2">
+            <a href="https://facebook.com/craves.cafe.bd" target="_blank" title="Facebook" class="w-10 h-10 rounded-xl bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 transition-all shadow-sm">
+                <i class="fa-brands fa-facebook-f text-lg"></i>
+            </a>
+            <a href="https://www.instagram.com/craves_cafe.bd" target="_blank" title="Instagram" class="w-10 h-10 rounded-xl bg-pink-50 hover:bg-pink-100 flex items-center justify-center text-pink-600 transition-all shadow-sm">
+                <i class="fa-brands fa-instagram text-lg"></i>
+            </a>
+            <a href="https://share.google/wNF9160jFUJIsU4qf" target="_blank" title="Google Map" class="w-10 h-10 rounded-xl bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-600 transition-all shadow-sm">
+                <i class="fa-solid fa-map-location-dot text-lg"></i>
+            </a>
+            <a href="https://wa.me/8801540340852" target="_blank" title="WhatsApp" class="w-10 h-10 rounded-xl bg-green-50 hover:bg-green-100 flex items-center justify-center text-green-600 transition-all shadow-sm">
+                <i class="fa-brands fa-whatsapp text-lg"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- MENU SLIDESHOW SECTION -->
     <section id="menu-slideshow-section" class="px-4 mt-8">
         <div class="flex items-center justify-between mb-3">
             <div>
                 <h3 class="font-black text-cravesBrown text-lg flex items-center gap-2">
                     <i class="fa-solid fa-utensils text-cravesRed"></i> Official Menu Slideshow
                 </h3>
-                <p class="text-[11px] text-gray-500">Swipe, animate, or tap any image to zoom in!</p>
+                <p class="text-[11px] text-gray-500">Tap any menu image to open full zoom viewer!</p>
             </div>
             <div class="flex gap-1.5">
                 <button onclick="prevSlide()" class="w-8 h-8 rounded-full bg-cravesSand hover:bg-cravesRed hover:text-white text-cravesBrown flex items-center justify-center shadow transition-colors">
@@ -235,18 +275,39 @@
         </div>
     </section>
 
-    <!-- LIGHTBOX / ZOOM MODAL -->
-    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex flex-col items-center justify-center p-4">
-        <button onclick="closeLightbox()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors">
-            <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-        <div class="relative max-w-4xl max-h-[85vh] overflow-auto flex items-center justify-center">
-            <img id="lightbox-img" src="" alt="Zoomed Menu" class="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl">
+    <!-- INTERACTIVE ZOOM LIGHTBOX MODAL -->
+    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden flex flex-col items-center justify-between p-4">
+        <!-- Top Controls Bar -->
+        <div class="w-full flex items-center justify-between max-w-lg pt-2">
+            <div class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs font-bold">
+                <i class="fa-solid fa-magnifying-glass"></i> <span id="zoom-level-text">100%</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="adjustZoom(0.3)" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors shadow">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                </button>
+                <button onclick="adjustZoom(-0.3)" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors shadow">
+                    <i class="fa-solid fa-minus text-sm"></i>
+                </button>
+                <button onclick="resetZoom()" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors shadow" title="Reset Zoom">
+                    <i class="fa-solid fa-rotate-right text-sm"></i>
+                </button>
+                <button onclick="closeLightbox()" class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-colors shadow">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
         </div>
-        <p class="text-white/70 text-xs mt-3">Pinch or scroll to zoom / Tap X to close</p>
+
+        <!-- Zoomable Image Frame -->
+        <div id="zoom-container">
+            <img id="lightbox-img" src="" alt="Zoomed Menu">
+        </div>
+
+        <!-- Footer Instructions -->
+        <p class="text-white/60 text-[11px] pb-2 text-center">Use buttons to zoom or drag/pinch to inspect details</p>
     </div>
 
-    <!-- QUICK CATEGORY TABS -->
+    <!-- QUICK ADD ITEMS SECTION -->
     <div class="px-4 mt-8">
         <div class="flex items-center justify-between mb-3">
             <h3 class="font-black text-cravesBrown text-lg" id="menu">Quick Add Items</h3>
@@ -504,14 +565,25 @@
             slideInterval = setInterval(nextSlide, 5000);
         }
 
-        // Lightbox Zoom Logic
+        // Advanced Interactive Zoom Logic for Lightbox
+        let scale = 1;
+        let posX = 0;
+        let posY = 0;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let initialPinchDistance = null;
+
+        const imgElement = document.getElementById('lightbox-img');
+        const zoomContainer = document.getElementById('zoom-container');
+
         function openLightbox(imgSrc) {
             const modal = document.getElementById('lightbox-modal');
-            const img = document.getElementById('lightbox-img');
-            img.src = imgSrc;
+            imgElement.src = imgSrc;
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             clearInterval(slideInterval);
+            resetZoom();
         }
 
         function closeLightbox() {
@@ -520,6 +592,84 @@
             document.body.style.overflow = 'auto';
             slideInterval = setInterval(nextSlide, 5000);
         }
+
+        function updateTransform() {
+            imgElement.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            document.getElementById('zoom-level-text').innerText = `${Math.round(scale * 100)}%`;
+        }
+
+        function adjustZoom(amount) {
+            scale = Math.max(1, Math.min(scale + amount, 4));
+            if (scale === 1) {
+                posX = 0;
+                posY = 0;
+            }
+            updateTransform();
+        }
+
+        function resetZoom() {
+            scale = 1;
+            posX = 0;
+            posY = 0;
+            updateTransform();
+        }
+
+        // Mouse Drag Panning
+        zoomContainer.addEventListener('mousedown', (e) => {
+            if (scale > 1) {
+                isDragging = true;
+                startX = e.clientX - posX;
+                startY = e.clientY - posY;
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            posX = e.clientX - startX;
+            posY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Touch Panning & Pinch-to-Zoom Support
+        zoomContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1 && scale > 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - posX;
+                startY = e.touches[0].clientY - posY;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                initialPinchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+            }
+        });
+
+        zoomContainer.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && isDragging) {
+                posX = e.touches[0].clientX - startX;
+                posY = e.touches[0].clientY - startY;
+                updateTransform();
+            } else if (e.touches.length === 2 && initialPinchDistance) {
+                const currentDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = currentDistance / initialPinchDistance;
+                scale = Math.max(1, Math.min(scale * factor, 4));
+                initialPinchDistance = currentDistance;
+                updateTransform();
+            }
+        });
+
+        zoomContainer.addEventListener('touchend', () => {
+            isDragging = false;
+            initialPinchDistance = null;
+        });
 
         // Cart and Order Logic
         let cart = [];
@@ -603,7 +753,7 @@
                 `;
             });
 
-    container.innerHTML = html;
+            container.innerHTML = html;
             totalEl.innerText = `৳${total}`;
         }
 

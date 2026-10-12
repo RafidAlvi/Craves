@@ -565,17 +565,20 @@
             document.getElementById('admin-modal').classList.add('hidden');
         }
 
-        function verifyAdminPassword(e) {
-            e.preventDefault();
-            const inputVal = document.getElementById('admin-pwd-input').value;
-            const errorMsg = document.getElementById('admin-error-msg');
+    
 
-            if (inputVal === "craves233") {
-                window.location.href = "admin.html";
-            } else {
-                errorMsg.classList.remove('hidden');
-                document.getElementById('admin-pwd-input').focus();
-            }
+        function verifyAdminPassword(e) {
+    e.preventDefault();
+    const inputVal = document.getElementById('admin-pwd-input').value;
+    const errorMsg = document.getElementById('admin-error-msg');
+
+    if (inputVal === "craves233") {
+        sessionStorage.setItem('craves_admin_auth', 'true'); // Set session flag
+        window.location.href = "admin.html";
+    } else {
+        errorMsg.classList.remove('hidden');
+        document.getElementById('admin-pwd-input').focus();
+    }
         }
 
         function togglePasswordVisibility() {

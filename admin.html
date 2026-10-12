@@ -366,7 +366,7 @@
                 <div id="variants-inputs-list" class="space-y-1.5">
                   <div class="flex gap-1.5 variant-row">
                     <input type="text" placeholder="Size (e.g. Regular)" value="Regular" class="w-3/5 px-2 py-1 text-xs bg-white border border-slate-200 rounded-lg v-name" />
-                    <input type="number" placeholder="৳ Price" value="${price}" class="w-2/5 px-2 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg v-price" />
+                    <input type="number" placeholder="৳ Price" class="w-2/5 px-2 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg v-price" />
                     <button type="button" onclick="removeVariantRow(this)" class="px-1 text-slate-400 hover:text-rose-600">✕</button>
                   </div>
                   <div class="flex gap-1.5 variant-row">
@@ -554,7 +554,6 @@
 
       <!-- SEARCH ORDER NUMBER & LOGS CONTROL -->
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-        <!-- Live Order Search Input -->
         <div class="relative flex-1 min-w-[240px] max-w-sm">
           <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-base"></i>
           <input type="text" id="order-search-input" oninput="filterOrdersTable()" placeholder="Search Token # (e.g. 101), Customer, Table..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white transition" />
@@ -706,7 +705,7 @@
     </div>
   </div>
 
-  <!-- ================= POPUP 1: ORDER CONFIRMATION & CASH CHANGE MODAL ================= -->
+  <!-- ================= POPUP 1: ORDER CONFIRMATION & CASH/SPLIT CHANGE MODAL ================= -->
   <div id="modal-order-confirm" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3" style="display: none;">
     <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-5 border border-slate-200 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -740,22 +739,26 @@
         <div id="confirm-items-list" class="max-h-36 overflow-y-auto space-y-1 text-xs border border-slate-200 rounded-xl p-2.5 bg-white divide-y divide-slate-100"></div>
       </div>
 
+      <!-- Payment Method Selection (Cash, bKash, Card, Split) -->
       <div>
         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Payment Method</label>
-        <div class="grid grid-cols-3 gap-2 text-xs font-bold">
-          <button type="button" onclick="selectPaymentMethod('Cash')" id="pay-btn-cash" class="pay-btn py-2 px-2 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex items-center justify-center gap-1.5 transition">
+        <div class="grid grid-cols-4 gap-1.5 text-xs font-bold">
+          <button type="button" onclick="selectPaymentMethod('Cash')" id="pay-btn-cash" class="pay-btn py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition">
             <i class="ph ph-money text-base"></i> Cash
           </button>
-          <button type="button" onclick="selectPaymentMethod('bKash/Nagad')" id="pay-btn-mfs" class="pay-btn py-2 px-2 rounded-xl border border-slate-200 text-slate-700 flex items-center justify-center gap-1.5 transition">
-            <i class="ph ph-device-mobile text-base"></i> bKash / Nagad
+          <button type="button" onclick="selectPaymentMethod('bKash/Nagad')" id="pay-btn-mfs" class="pay-btn py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition">
+            <i class="ph ph-device-mobile text-base"></i> bKash
           </button>
-          <button type="button" onclick="selectPaymentMethod('Card')" id="pay-btn-card" class="pay-btn py-2 px-2 rounded-xl border border-slate-200 text-slate-700 flex items-center justify-center gap-1.5 transition">
+          <button type="button" onclick="selectPaymentMethod('Card')" id="pay-btn-card" class="pay-btn py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition">
             <i class="ph ph-credit-card text-base"></i> Card
+          </button>
+          <button type="button" onclick="selectPaymentMethod('Split')" id="pay-btn-split" class="pay-btn py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition">
+            <i class="ph ph-arrows-split text-base"></i> Split
           </button>
         </div>
       </div>
 
-      <!-- CASH TENDERED & CHANGE RETURN CALCULATOR -->
+      <!-- CASH TENDERED & CHANGE RETURN CALCULATOR (FOR CASH PAYMENT) -->
       <div id="cash-calculator-box" class="p-3 bg-amber-50/60 border border-amber-200 rounded-xl space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
@@ -784,6 +787,26 @@
           <button onclick="setTenderAmount(200)" class="px-2 py-0.5 bg-white border border-slate-200 rounded hover:bg-amber-100">৳200</button>
           <button onclick="setTenderAmount(500)" class="px-2 py-0.5 bg-white border border-slate-200 rounded hover:bg-amber-100">৳500</button>
           <button onclick="setTenderAmount(1000)" class="px-2 py-0.5 bg-white border border-slate-200 rounded hover:bg-amber-100">৳1000</button>
+        </div>
+      </div>
+
+      <!-- SPLIT PAYMENT BREAKDOWN BOX (CASH + BKASH/NAGAD) -->
+      <div id="split-calculator-box" class="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-2" style="display: none;">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-indigo-900 flex items-center gap-1">
+            <i class="ph ph-arrows-split"></i> Split Payment Breakdown
+          </span>
+          <span class="text-[10px] font-semibold text-indigo-700">Cash + bKash</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="text-[10px] text-slate-600 font-semibold block mb-0.5">Cash Paid (৳)</label>
+            <input type="number" id="split-cash-amount" oninput="calculateSplitValues('cash')" placeholder="0" class="w-full bg-white border border-indigo-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-900 focus:border-indigo-600" />
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-600 font-semibold block mb-0.5">bKash / Nagad (৳)</label>
+            <input type="number" id="split-mfs-amount" oninput="calculateSplitValues('mfs')" placeholder="0" class="w-full bg-white border border-indigo-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-900 focus:border-indigo-600" />
+          </div>
         </div>
       </div>
 
@@ -996,6 +1019,10 @@
     let activeChannel = 'Dine-In';
     let manualDiscount = 0;
     let selectedPayment = 'Cash';
+
+    // Split Payment State
+    let splitCash = 0;
+    let splitMfs = 0;
 
     let configuredItem = null;
     let configuredVariant = null;
@@ -1462,7 +1489,7 @@
     }
 
     /* =========================================================================
-       8. POPUP 1: ORDER CONFIRMATION & CASH CHANGE
+       8. POPUP 1: ORDER CONFIRMATION & CASH/SPLIT CHANGE
        ========================================================================= */
     function openOrderConfirmModal() {
       if (cart.length === 0) {
@@ -1507,21 +1534,48 @@
     function selectPaymentMethod(method) {
       selectedPayment = method;
       const calcBox = document.getElementById('cash-calculator-box');
+      const splitBox = document.getElementById('split-calculator-box');
+      const payable = getPayableAmount();
 
-      ['cash', 'mfs', 'card'].forEach(id => {
+      ['cash', 'mfs', 'card', 'split'].forEach(id => {
         const btn = document.getElementById(`pay-btn-${id}`);
-        btn.className = 'pay-btn py-2 px-2 rounded-xl border border-slate-200 text-slate-700 flex items-center justify-center gap-1.5 transition';
+        if (btn) btn.className = 'pay-btn py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition';
       });
 
       if (method === 'Cash') {
-        document.getElementById('pay-btn-cash').className = 'pay-btn py-2 px-2 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex items-center justify-center gap-1.5 transition';
+        document.getElementById('pay-btn-cash').className = 'pay-btn py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition';
         calcBox.style.display = 'block';
-      } else if (method === 'bKash/Nagad') {
-        document.getElementById('pay-btn-mfs').className = 'pay-btn py-2 px-2 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex items-center justify-center gap-1.5 transition';
+        splitBox.style.display = 'none';
+      } else if (method === 'Split') {
+        document.getElementById('pay-btn-split').className = 'pay-btn py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition';
         calcBox.style.display = 'none';
+        splitBox.style.display = 'block';
+
+        const half = Math.round(payable / 2);
+        document.getElementById('split-cash-amount').value = half;
+        document.getElementById('split-mfs-amount').value = payable - half;
+        splitCash = half;
+        splitMfs = payable - half;
       } else {
-        document.getElementById('pay-btn-card').className = 'pay-btn py-2 px-2 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex items-center justify-center gap-1.5 transition';
+        const activeId = method === 'bKash/Nagad' ? 'mfs' : 'card';
+        document.getElementById(`pay-btn-${activeId}`).className = 'pay-btn py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition';
         calcBox.style.display = 'none';
+        splitBox.style.display = 'none';
+      }
+    }
+
+    function calculateSplitValues(changedField) {
+      const payable = getPayableAmount();
+      if (changedField === 'cash') {
+        const cVal = parseFloat(document.getElementById('split-cash-amount').value) || 0;
+        splitCash = cVal;
+        splitMfs = Math.max(0, payable - cVal);
+        document.getElementById('split-mfs-amount').value = splitMfs;
+      } else {
+        const mVal = parseFloat(document.getElementById('split-mfs-amount').value) || 0;
+        splitMfs = mVal;
+        splitCash = Math.max(0, payable - mVal);
+        document.getElementById('split-cash-amount').value = splitCash;
       }
     }
 
@@ -1568,9 +1622,12 @@
 
       let cashTendered = finalPayable;
       let changeReturned = 0;
+
       if (selectedPayment === 'Cash') {
         cashTendered = parseFloat(document.getElementById('input-cash-tendered').value) || finalPayable;
         changeReturned = Math.max(0, cashTendered - finalPayable);
+      } else if (selectedPayment === 'Split') {
+        cashTendered = splitCash;
       }
 
       const assignedToken = currentTokenNumber;
@@ -1587,8 +1644,10 @@
         subtotal: subtotal,
         discount: manualDiscount,
         total: finalPayable,
-        payment: selectedPayment,
+        payment: selectedPayment === 'Split' ? `Split (Cash ৳${splitCash} + bKash ৳${splitMfs})` : selectedPayment,
         cashTendered: cashTendered,
+        splitCash: selectedPayment === 'Split' ? splitCash : 0,
+        splitMfs: selectedPayment === 'Split' ? splitMfs : 0,
         changeReturned: changeReturned,
         status: 'Preparing'
       };
@@ -2007,7 +2066,12 @@
       document.getElementById('pr-time').innerText = order.timeStr;
       document.getElementById('pr-customer').innerText = `Cust: ${order.customer || 'Walk-in'}`;
       document.getElementById('pr-date').innerText = order.dateStr;
-      document.getElementById('pr-payment').innerText = `Pay: ${order.payment}`;
+
+      if (order.splitCash && order.splitMfs) {
+        document.getElementById('pr-payment').innerText = `Pay: Cash ৳${order.splitCash} + bKash ৳${order.splitMfs}`;
+      } else {
+        document.getElementById('pr-payment').innerText = `Pay: ${order.payment}`;
+      }
 
       const itemsBody = document.getElementById('pr-items-body');
       itemsBody.innerHTML = order.items.map(item => {
@@ -2222,7 +2286,6 @@
       filterOrdersTable();
     }
 
-    // REMOVE / DELETE SINGLE ORDER FUNCTION
     async function deleteSingleOrder(token) {
       if (confirm(`Are you sure you want to delete Order #${token} permanently from sales records?`)) {
         try {
@@ -2572,4 +2635,4 @@
     }
   </script>
 </body>
-            </html>
+</html>

@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>CRAVES • ক্রেভ্স | Online POS & Management System</title>
   
-  <!-- Tailwind CSS CDN -->
+  <!-- Admin Authentication Check -->
   <script>
-    // Check if authenticated in the current browser session
     if (sessionStorage.getItem('craves_admin_auth') !== 'true') {
         const passwordPrompt = prompt("Restricted Area: Enter Admin Password");
         if (passwordPrompt === "craves233") {
@@ -17,8 +16,9 @@
             window.location.href = "index.html";
         }
     }
-</script>
+  </script>
 
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons CDN -->
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
@@ -140,12 +140,12 @@
           <span>+8801540340852</span>
         </a>
 
-        <button onclick="downloadDailyCSV()" title="Download today's sales and expense report as CSV" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border border-slate-200">
+        <button onclick="downloadPeriodCSV()" title="Download sales and expense report as CSV" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border border-slate-200">
           <i class="ph ph-file-csv text-base text-emerald-600"></i>
-          <span class="hidden md:inline">Daily CSV</span>
+          <span class="hidden md:inline">Export CSV</span>
         </button>
 
-        <button onclick="downloadDailySummaryPNG()" title="Download sales & profit snapshot as PNG" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border border-slate-200">
+        <button onclick="downloadPeriodSummaryPNG()" title="Download sales & profit snapshot as PNG" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border border-slate-200">
           <i class="ph ph-image text-base text-indigo-600"></i>
           <span class="hidden md:inline">Summary PNG</span>
         </button>
@@ -512,15 +512,34 @@
       </div>
     </div>
 
-    <!-- VIEW 5: SALES REPORTS & NET PROFIT -->
+    <!-- VIEW 5: SALES REPORTS, MONTHLY CALCULATION & ORDER SEARCH -->
     <div id="view-reports" class="view-panel hidden space-y-4">
+      
+      <!-- PERIOD SELECTOR BAR (TODAY / THIS MONTH / CUSTOM MONTH) -->
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <i class="ph ph-calendar text-rose-600 text-lg"></i>
+          <span class="text-xs font-extrabold text-slate-900">Report Timeline:</span>
+          <div class="inline-flex p-0.5 bg-slate-100 rounded-xl text-xs font-bold">
+            <button onclick="setReportPeriod('today')" id="period-btn-today" class="px-3 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition">Today</button>
+            <button onclick="setReportPeriod('month')" id="period-btn-month" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">This Month</button>
+            <button onclick="setReportPeriod('custom')" id="period-btn-custom" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">Pick Month</button>
+          </div>
+        </div>
+
+        <div id="custom-month-container" class="flex items-center gap-2" style="display: none;">
+          <input type="month" id="report-month-input" onchange="onCustomMonthChange()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:border-rose-500" />
+        </div>
+      </div>
+
+      <!-- PERIOD KPI CARDS -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Today's Revenue</span>
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" id="label-kpi-revenue">Period Revenue</span>
           <p id="kpi-today-revenue" class="text-xl font-extrabold text-emerald-600 mt-1">৳0</p>
         </div>
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Today's Expenses</span>
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block" id="label-kpi-expense">Period Expenses</span>
           <p id="kpi-today-expense" class="text-xl font-extrabold text-rose-600 mt-1">৳0</p>
         </div>
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
@@ -528,22 +547,26 @@
           <p id="kpi-today-profit" class="text-xl font-extrabold text-indigo-600 mt-1">৳0</p>
         </div>
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Drawer Cash in Hand</span>
-          <p id="kpi-today-cash" class="text-xl font-extrabold text-slate-900 mt-1">৳0</p>
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Orders Processed</span>
+          <p id="kpi-today-cash" class="text-xl font-extrabold text-slate-900 mt-1">0</p>
         </div>
       </div>
 
+      <!-- SEARCH ORDER NUMBER & LOGS CONTROL -->
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-        <div class="flex items-center gap-2">
-          <h3 class="text-sm font-extrabold text-slate-900">Order Logs</h3>
-          <span id="reports-count-badge" class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-xs font-bold">0 records</span>
+        <!-- Live Order Search Input -->
+        <div class="relative flex-1 min-w-[240px] max-w-sm">
+          <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-base"></i>
+          <input type="text" id="order-search-input" oninput="filterOrdersTable()" placeholder="Search Token # (e.g. 101), Customer, Table..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white transition" />
         </div>
+
         <div class="flex items-center gap-2">
-          <button onclick="downloadDailyCSV()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1">
-            <i class="ph ph-download-simple"></i> Download CSV
+          <span id="reports-count-badge" class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold">0 records</span>
+          <button onclick="downloadPeriodCSV()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1">
+            <i class="ph ph-download-simple"></i> Export CSV
           </button>
-          <button onclick="downloadDailySummaryPNG()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 flex items-center gap-1">
-            <i class="ph ph-image"></i> Save Summary PNG
+          <button onclick="downloadPeriodSummaryPNG()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 flex items-center gap-1">
+            <i class="ph ph-image"></i> Summary PNG
           </button>
           <button onclick="clearAllOrdersHistory()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold border border-rose-200">
             Clear Logs
@@ -551,13 +574,14 @@
         </div>
       </div>
 
+      <!-- Orders Ledger Table -->
       <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
             <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
               <tr>
                 <th class="p-3">Token #</th>
-                <th class="p-3">Time</th>
+                <th class="p-3">Date & Time</th>
                 <th class="p-3">Channel / Table</th>
                 <th class="p-3">Items Summary</th>
                 <th class="p-3">Payment</th>
@@ -916,7 +940,7 @@
     });
 
     /* =========================================================================
-       2. DEFAULT CRAVES MENU (Used to bootstrap cloud if database is empty)
+       2. DEFAULT CRAVES MENU
        ========================================================================= */
     const DEFAULT_CRAVES_MENU = [
       { id: 'bpm', name: 'Big Patty Burger', bengali: 'বিগ প্যাটি বার্গার', category: 'mains', type: 'food', price: 199, variants: null },
@@ -961,7 +985,7 @@
     ];
 
     /* =========================================================================
-       3. LIVE APP STATE (Synchronized with Firestore)
+       3. LIVE APP STATE
        ========================================================================= */
     let liveMenu = [];
     let orderHistory = [];
@@ -980,10 +1004,21 @@
     let latestOrder = null;
     let toastTimeout = null;
 
+    // Report Period State
+    let currentReportPeriod = 'today'; // 'today', 'month', 'custom'
+    let selectedCustomMonth = ''; // 'YYYY-MM'
+
     /* =========================================================================
        4. REAL-TIME FIRESTORE SYNC LISTENERS
        ========================================================================= */
     window.addEventListener('DOMContentLoaded', () => {
+      // Set default input for month picker
+      const now = new Date();
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      selectedCustomMonth = monthStr;
+      const monthInput = document.getElementById('report-month-input');
+      if (monthInput) monthInput.value = monthStr;
+
       listenToOnlineMenu();
       listenToOnlineOrders();
       listenToOnlineExpenses();
@@ -1829,18 +1864,22 @@
       const cashEl = document.getElementById('expense-kpi-cash');
       const countEl = document.getElementById('expense-kpi-count');
 
-      const totalExpense = expenseHistory.reduce((s, e) => s + e.amount, 0);
-      const cashExpense = expenseHistory.filter(e => e.paymentMethod === 'Cash Drawer').reduce((s, e) => s + e.amount, 0);
+      // Filter expenses for today's quick card
+      const todayStr = new Date().toLocaleDateString('en-GB');
+      const todayExpenses = expenseHistory.filter(e => e.dateStr === todayStr);
+
+      const totalExpense = todayExpenses.reduce((s, e) => s + e.amount, 0);
+      const cashExpense = todayExpenses.filter(e => e.paymentMethod === 'Cash Drawer').reduce((s, e) => s + e.amount, 0);
 
       totalEl.innerText = `৳${totalExpense}`;
       cashEl.innerText = `৳${cashExpense}`;
-      countEl.innerText = expenseHistory.length.toString();
+      countEl.innerText = todayExpenses.length.toString();
 
       if (expenseHistory.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="6" class="p-6 text-center text-slate-400 text-xs">
-              No expenses recorded yet today.
+              No expenses recorded yet.
             </td>
           </tr>
         `;
@@ -1849,7 +1888,7 @@
 
       tbody.innerHTML = expenseHistory.map(exp => `
         <tr class="hover:bg-slate-50 transition">
-          <td class="p-2.5 text-slate-500 font-medium">${exp.timeStr}</td>
+          <td class="p-2.5 text-slate-500 font-medium">${exp.dateStr} ${exp.timeStr}</td>
           <td class="p-2.5 font-bold text-slate-900">${exp.title}</td>
           <td class="p-2.5"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-semibold">${exp.category}</span></td>
           <td class="p-2.5 text-slate-600">${exp.paymentMethod}</td>
@@ -2022,7 +2061,174 @@
     }
 
     /* =========================================================================
-       14. PNG & CSV EXPORT ENGINES
+       14. PERIOD FILTERING & SEARCH CONTROLLER (MONTHLY & TODAY)
+       ========================================================================= */
+    function setReportPeriod(period) {
+      currentReportPeriod = period;
+      
+      const btnToday = document.getElementById('period-btn-today');
+      const btnMonth = document.getElementById('period-btn-month');
+      const btnCustom = document.getElementById('period-btn-custom');
+      const customBox = document.getElementById('custom-month-container');
+
+      [btnToday, btnMonth, btnCustom].forEach(b => {
+        b.className = 'px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+      });
+
+      if (period === 'today') {
+        btnToday.className = 'px-3 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition';
+        customBox.style.display = 'none';
+      } else if (period === 'month') {
+        btnMonth.className = 'px-3 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition';
+        customBox.style.display = 'none';
+      } else {
+        btnCustom.className = 'px-3 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition';
+        customBox.style.display = 'flex';
+      }
+
+      updateReportsKPIs();
+      filterOrdersTable();
+    }
+
+    function onCustomMonthChange() {
+      selectedCustomMonth = document.getElementById('report-month-input').value;
+      updateReportsKPIs();
+      filterOrdersTable();
+    }
+
+    // Helper: checks if a record belongs to the selected period
+    function isRecordInActivePeriod(record) {
+      const now = new Date();
+      const todayStr = now.toLocaleDateString('en-GB'); // DD/MM/YYYY
+      const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      // record.timestamp is ISO string
+      let recYearMonth = '';
+      if (record.timestamp) {
+        const d = new Date(record.timestamp);
+        recYearMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      } else if (record.dateStr) {
+        const parts = record.dateStr.split('/');
+        if (parts.length === 3) recYearMonth = `${parts[2]}-${parts[1]}`;
+      }
+
+      if (currentReportPeriod === 'today') {
+        return record.dateStr === todayStr;
+      } else if (currentReportPeriod === 'month') {
+        return recYearMonth === currentYearMonth;
+      } else if (currentReportPeriod === 'custom') {
+        return recYearMonth === selectedCustomMonth;
+      }
+      return true;
+    }
+
+    function getPeriodFilteredOrders() {
+      return orderHistory.filter(o => isRecordInActivePeriod(o));
+    }
+
+    function getPeriodFilteredExpenses() {
+      return expenseHistory.filter(e => isRecordInActivePeriod(e));
+    }
+
+    function updateReportsKPIs() {
+      const pOrders = getPeriodFilteredOrders();
+      const pExpenses = getPeriodFilteredExpenses();
+
+      const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
+      const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+      const netProfit = totalRev - totalExp;
+
+      const labelRev = document.getElementById('label-kpi-revenue');
+      const labelExp = document.getElementById('label-kpi-expense');
+
+      if (currentReportPeriod === 'today') {
+        labelRev.innerText = "Today's Revenue";
+        labelExp.innerText = "Today's Expenses";
+      } else if (currentReportPeriod === 'month') {
+        labelRev.innerText = "This Month's Revenue";
+        labelExp.innerText = "This Month's Expenses";
+      } else {
+        labelRev.innerText = `Revenue (${selectedCustomMonth})`;
+        labelExp.innerText = `Expenses (${selectedCustomMonth})`;
+      }
+
+      document.getElementById('kpi-today-revenue').innerText = `৳${totalRev}`;
+      document.getElementById('kpi-today-expense').innerText = `৳${totalExp}`;
+      document.getElementById('kpi-today-profit').innerText = `৳${netProfit}`;
+      document.getElementById('kpi-today-profit').className = `text-xl font-extrabold mt-1 ${netProfit >= 0 ? 'text-indigo-600' : 'text-rose-600'}`;
+      document.getElementById('kpi-today-cash').innerText = `${pOrders.length}`;
+    }
+
+    /* =========================================================================
+       15. ORDER SEARCH & TABLE RENDERING
+       ========================================================================= */
+    function filterOrdersTable() {
+      const query = (document.getElementById('order-search-input').value || '').toLowerCase().trim();
+      const pOrders = getPeriodFilteredOrders();
+
+      const filtered = pOrders.filter(o => {
+        const tokenMatch = (`${o.token}`.includes(query) || `#${o.token}`.includes(query));
+        const custMatch = (o.customer || '').toLowerCase().includes(query);
+        const tableMatch = (o.table || '').toLowerCase().includes(query);
+        const itemMatch = o.items ? o.items.some(i => i.name.toLowerCase().includes(query)) : false;
+        return tokenMatch || custMatch || tableMatch || itemMatch;
+      });
+
+      renderFilteredOrdersTable(filtered);
+    }
+
+    function renderFilteredOrdersTable(ordersList) {
+      const tbody = document.getElementById('orders-table-body');
+      document.getElementById('reports-count-badge').innerText = `${ordersList.length} records`;
+
+      if (ordersList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="p-8 text-center text-slate-400 text-xs">
+              No matching orders found for this period/search.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = ordersList.map(order => {
+        const itemNames = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-3 font-extrabold text-slate-900">#${order.token}</td>
+            <td class="p-3 text-slate-500 font-medium">${order.dateStr} <span class="text-slate-400 text-[10px]">${order.timeStr}</span></td>
+            <td class="p-3 font-semibold text-slate-700">${order.channel} • ${order.table}</td>
+            <td class="p-3 text-slate-600 max-w-xs truncate" title="${itemNames}">${itemNames}</td>
+            <td class="p-3">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${order.payment}</span>
+            </td>
+            <td class="p-3 font-black text-rose-600">৳${order.total}</td>
+            <td class="p-3 text-right">
+              <button onclick="trigger58mmThermalPrint(${order.token})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">
+                <i class="ph ph-printer"></i> Slip
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderReportsTable() {
+      filterOrdersTable();
+    }
+
+    async function clearAllOrdersHistory() {
+      if (confirm("Are you sure you want to clear orders history from the cloud database?")) {
+        for (const order of orderHistory) {
+          await db.collection('craves_orders').doc(`token_${order.token}`).delete();
+        }
+        showToast('Order history cleared.');
+      }
+    }
+
+    /* =========================================================================
+       16. PNG & CSV EXPORT ENGINES (FOR ACTIVE PERIOD)
        ========================================================================= */
     function downloadActiveReceiptPNG() {
       if (!latestOrder) {
@@ -2182,18 +2388,21 @@
       showToast(`Receipt PNG for #${order.token} downloaded!`);
     }
 
-    function downloadDailyCSV() {
-      if (orderHistory.length === 0 && expenseHistory.length === 0) {
-        showToast('No records to export!', 'ph-warning', true);
+    function downloadPeriodCSV() {
+      const pOrders = getPeriodFilteredOrders();
+      const pExpenses = getPeriodFilteredExpenses();
+
+      if (pOrders.length === 0 && pExpenses.length === 0) {
+        showToast('No records to export for this period!', 'ph-warning', true);
         return;
       }
 
       let csv = '\uFEFF';
-      csv += '--- ORDERS & REVENUE ---\n';
+      csv += `--- CRAVES REPORT (${currentReportPeriod.toUpperCase()}) ---\n`;
       csv += 'Token,Date,Time,Channel,Table,Customer,Items,Subtotal,Discount,Total,Payment,Tendered,Change,Status\n';
 
-      orderHistory.forEach(o => {
-        const itemSummary = o.items.map(i => `${i.qty}x ${i.name}${i.variantName ? `(${i.variantName})` : ''}`).join('; ');
+      pOrders.forEach(o => {
+        const itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}${i.variantName ? `(${i.variantName})` : ''}`).join('; ') : '';
         const row = [
           `#${o.token}`,
           `"${o.dateStr}"`,
@@ -2215,27 +2424,27 @@
 
       csv += '\n--- EXPENSES ---\n';
       csv += 'ID,Date,Time,Title,Category,PaymentSource,Amount\n';
-      expenseHistory.forEach(e => {
+      pExpenses.forEach(e => {
         csv += `"${e.id}","${e.dateStr}","${e.timeStr}","${e.title.replace(/"/g, '""')}","${e.category}","${e.paymentMethod}",${e.amount}\n`;
       });
 
-      const totalRev = orderHistory.reduce((s, o) => s + o.total, 0);
-      const totalExp = expenseHistory.reduce((s, e) => s + e.amount, 0);
+      const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
+      const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
       csv += `\nSUMMARY,Total Revenue,${totalRev},Total Expense,${totalExp},Net Profit,${totalRev - totalExp}\n`;
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `CRAVES_Daily_Report_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      showToast('Daily CSV Report Downloaded!');
+      showToast('CSV Report Downloaded!');
     }
 
-    function downloadDailySummaryPNG() {
+    function downloadPeriodSummaryPNG() {
       const canvas = document.getElementById('hidden-receipt-canvas');
       const ctx = canvas.getContext('2d');
 
@@ -2256,17 +2465,21 @@
       ctx.fillText('CRAVES • ক্রেভ্স (Mirpur 10)', 20, 36);
 
       ctx.font = '12px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`Daily Sales & Expense Summary • ${new Date().toLocaleDateString('en-GB')}`, 20, 58);
+      let periodLabel = currentReportPeriod === 'today' ? `Daily Summary • ${new Date().toLocaleDateString('en-GB')}` : `Monthly Summary • ${currentReportPeriod === 'month' ? 'Current Month' : selectedCustomMonth}`;
+      ctx.fillText(periodLabel, 20, 58);
 
-      let totalRev = orderHistory.reduce((s, o) => s + o.total, 0);
-      let totalExp = expenseHistory.reduce((s, e) => s + e.amount, 0);
+      const pOrders = getPeriodFilteredOrders();
+      const pExpenses = getPeriodFilteredExpenses();
+
+      let totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
+      let totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
       let netProfit = totalRev - totalExp;
-      let totalOrders = orderHistory.length;
 
       ctx.fillStyle = '#f8fafc';
       ctx.strokeStyle = '#e2e8f0';
       ctx.lineWidth = 1;
 
+      // Box 1 Revenue
       ctx.fillRect(20, 100, 195, 75);
       ctx.strokeRect(20, 100, 195, 75);
       ctx.fillStyle = '#64748b';
@@ -2276,7 +2489,7 @@
       ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
       ctx.fillText(`৳${totalRev}`, 32, 152);
 
-      ctx.fillStyle = '#f8fafc';
+      // Box 2 Expenses
       ctx.fillRect(235, 100, 195, 75);
       ctx.strokeRect(235, 100, 195, 75);
       ctx.fillStyle = '#64748b';
@@ -2286,7 +2499,7 @@
       ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
       ctx.fillText(`৳${totalExp}`, 247, 152);
 
-      ctx.fillStyle = '#f8fafc';
+      // Box 3 Net Profit
       ctx.fillRect(20, 190, 410, 75);
       ctx.strokeRect(20, 190, 410, 75);
       ctx.fillStyle = '#64748b';
@@ -2304,18 +2517,18 @@
       y += 24;
       ctx.font = '12px "Plus Jakarta Sans", sans-serif';
       ctx.fillStyle = '#475569';
-      ctx.fillText('Total Orders Processed:', 20, y);
+      ctx.fillText('Orders in Selected Period:', 20, y);
       ctx.textAlign = 'right';
       ctx.fillStyle = '#0f172a';
-      ctx.fillText(`${totalOrders}`, width - 20, y);
+      ctx.fillText(`${pOrders.length}`, width - 20, y);
 
       y += 20;
       ctx.textAlign = 'left';
       ctx.fillStyle = '#475569';
-      ctx.fillText('Expense Entries Recorded:', 20, y);
+      ctx.fillText('Expenses Recorded:', 20, y);
       ctx.textAlign = 'right';
       ctx.fillStyle = '#0f172a';
-      ctx.fillText(`${expenseHistory.length}`, width - 20, y);
+      ctx.fillText(`${pExpenses.length}`, width - 20, y);
 
       y += 30;
       ctx.beginPath();
@@ -2334,76 +2547,12 @@
       ctx.fillText('Address: House 8, Road 4, Block C, Mirpur 10, Dhaka', 20, y);
 
       const link = document.createElement('a');
-      link.download = `CRAVES_Sales_Expense_Summary_${new Date().toISOString().split('T')[0]}.png`;
+      link.download = `CRAVES_Summary_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
 
-      showToast('Daily Summary PNG Downloaded!');
-    }
-
-    /* =========================================================================
-       15. REPORTS AND DASHBOARD CALCULATIONS
-       ========================================================================= */
-    function updateReportsKPIs() {
-      const totalRev = orderHistory.reduce((s, o) => s + o.total, 0);
-      const totalExp = expenseHistory.reduce((s, e) => s + e.amount, 0);
-      const netProfit = totalRev - totalExp;
-      
-      const cashSales = orderHistory.filter(o => o.payment === 'Cash').reduce((s, o) => s + o.total, 0);
-      const cashExp = expenseHistory.filter(e => e.paymentMethod === 'Cash Drawer').reduce((s, e) => s + e.amount, 0);
-      const drawerCashInHand = cashSales - cashExp;
-
-      document.getElementById('kpi-today-revenue').innerText = `৳${totalRev}`;
-      document.getElementById('kpi-today-expense').innerText = `৳${totalExp}`;
-      document.getElementById('kpi-today-profit').innerText = `৳${netProfit}`;
-      document.getElementById('kpi-today-profit').className = `text-xl font-extrabold mt-1 ${netProfit >= 0 ? 'text-indigo-600' : 'text-rose-600'}`;
-      document.getElementById('kpi-today-cash').innerText = `৳${drawerCashInHand}`;
-      document.getElementById('reports-count-badge').innerText = `${orderHistory.length} orders`;
-    }
-
-    function renderReportsTable() {
-      const tbody = document.getElementById('orders-table-body');
-      if (orderHistory.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" class="p-8 text-center text-slate-400 text-xs">
-              No orders completed yet today.
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = orderHistory.map(order => {
-        const itemNames = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
-        return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="p-3 font-extrabold text-slate-900">#${order.token}</td>
-            <td class="p-3 text-slate-500 font-medium">${order.timeStr}</td>
-            <td class="p-3 font-semibold text-slate-700">${order.channel} • ${order.table}</td>
-            <td class="p-3 text-slate-600 max-w-xs truncate" title="${itemNames}">${itemNames}</td>
-            <td class="p-3">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${order.payment}</span>
-            </td>
-            <td class="p-3 font-black text-rose-600">৳${order.total}</td>
-            <td class="p-3 text-right">
-              <button onclick="trigger58mmThermalPrint(${order.token})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">
-                <i class="ph ph-printer"></i> Slip
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    async function clearAllOrdersHistory() {
-      if (confirm("Are you sure you want to clear today's orders history from cloud?")) {
-        for (const order of orderHistory) {
-          await db.collection('craves_orders').doc(`token_${order.token}`).delete();
-        }
-        showToast('Order history cleared.');
-      }
+      showToast('Summary PNG Downloaded!');
     }
   </script>
 </body>
-  </html>
+      </html>

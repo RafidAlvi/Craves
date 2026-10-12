@@ -128,6 +128,15 @@
         #lightbox-img:active {
             cursor: grabbing;
         }
+
+        /* Admin Modal Animations */
+        @keyframes modalPop {
+            0% { transform: scale(0.9) translateY(10px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-modal {
+            animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
 </head>
 <body class="bg-cravesCream antialiased selection:bg-red-600 selection:text-white pb-24">
@@ -169,6 +178,10 @@
         </div>
 
         <div class="flex items-center gap-2">
+            <!-- Password Protected Admin Button -->
+            <button onclick="openAdminModal()" class="bg-cravesSand hover:bg-red-100 text-cravesBrown text-xs font-bold px-3 py-2 rounded-full shadow-sm flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-lock text-[10px]"></i> Admin
+            </button>
             <!-- Cart Button with Badge -->
             <button onclick="toggleCartDrawer()" class="relative bg-cravesSand hover:bg-red-100 text-cravesRed w-10 h-10 rounded-full flex items-center justify-center shadow-sm transition-transform active:scale-95">
                 <i class="fa-solid fa-cart-shopping text-base"></i>
@@ -176,6 +189,45 @@
             </button>
         </div>
     </nav>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div id="admin-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-red-900/10 relative animate-modal">
+            <!-- Close Button -->
+            <button onclick="closeAdminModal()" class="absolute top-4 right-4 text-gray-400 hover:text-cravesBrown text-sm w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Modal Header -->
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 rounded-2xl bg-red-100 text-cravesRed mx-auto mb-3 flex items-center justify-center shadow-inner">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
+                </div>
+                <h3 class="text-lg font-black text-cravesBrown">Admin Verification</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Please enter password to access management portal</p>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="verifyAdminPassword(event)" class="space-y-4">
+                <div class="relative">
+                    <i class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="password" id="admin-pwd-input" placeholder="Enter password" class="w-full bg-cravesSand/60 border border-red-900/10 focus:border-cravesRed text-cravesBrown text-xs rounded-xl pl-9 pr-10 py-3 font-semibold focus:outline-none transition-colors">
+                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cravesBrown text-xs">
+                        <i id="pwd-eye-icon" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <!-- Error Message Container -->
+                <p id="admin-error-msg" class="text-[11px] text-red-600 font-bold hidden flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation"></i> Incorrect password. Please try again.
+                </p>
+
+                <button type="submit" class="w-full bg-cravesRed hover:bg-cravesDarkRed text-white font-bold text-xs py-3 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-right-to-bracket text-xs"></i> Login to Admin
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- APP HERO BANNER -->
     <header class="brand-pattern text-white p-5 mx-4 mt-4 rounded-3xl shadow-xl relative overflow-hidden text-center">
@@ -497,6 +549,57 @@
 
     <!-- JAVASCRIPT -->
     <script>
+        // Admin Modal Logic
+        function openAdminModal() {
+            const modal = document.getElementById('admin-modal');
+            const pwdInput = document.getElementById('admin-pwd-input');
+            const errorMsg = document.getElementById('admin-error-msg');
+            
+            pwdInput.value = '';
+            errorMsg.classList.add('hidden');
+            modal.classList.remove('hidden');
+            setTimeout(() => pwdInput.focus(), 100);
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function verifyAdminPassword(e) {
+            e.preventDefault();
+            const inputVal = document.getElementById('admin-pwd-input').value;
+            const errorMsg = document.getElementById('admin-error-msg');
+
+            if (inputVal === "craves233") {
+                window.location.href = "admin.html";
+            } else {
+                errorMsg.classList.remove('hidden');
+                document.getElementById('admin-pwd-input').focus();
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const pwdInput = document.getElementById('admin-pwd-input');
+            const eyeIcon = document.getElementById('pwd-eye-icon');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.className = 'fa-solid fa-eye-slash';
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        // Close Admin Modal when clicking outside
+        document.getElementById('admin-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeAdminModal();
+        });
+
+        // Keyboard navigation (Esc to close modal)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeAdminModal();
+        });
+
         // Hide Splash Screen after page loads
         window.addEventListener('load', function() {
             setTimeout(function() {

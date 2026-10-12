@@ -6,6 +6,19 @@
   <title>CRAVES • ক্রেভ্স | Online POS & Management System</title>
   
   <!-- Tailwind CSS CDN -->
+  <script>
+    // Check if authenticated in the current browser session
+    if (sessionStorage.getItem('craves_admin_auth') !== 'true') {
+        const passwordPrompt = prompt("Restricted Area: Enter Admin Password");
+        if (passwordPrompt === "craves233") {
+            sessionStorage.setItem('craves_admin_auth', 'true');
+        } else {
+            alert("Incorrect password. Access denied.");
+            window.location.href = "index.html";
+        }
+    }
+</script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons CDN -->
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />

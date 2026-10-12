@@ -366,7 +366,7 @@
                 <div id="variants-inputs-list" class="space-y-1.5">
                   <div class="flex gap-1.5 variant-row">
                     <input type="text" placeholder="Size (e.g. Regular)" value="Regular" class="w-3/5 px-2 py-1 text-xs bg-white border border-slate-200 rounded-lg v-name" />
-                    <input type="number" placeholder="৳ Price" class="w-2/5 px-2 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg v-price" />
+                    <input type="number" placeholder="৳ Price" value="${price}" class="w-2/5 px-2 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg v-price" />
                     <button type="button" onclick="removeVariantRow(this)" class="px-1 text-slate-400 hover:text-rose-600">✕</button>
                   </div>
                   <div class="flex gap-1.5 variant-row">
@@ -496,7 +496,7 @@
               <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider sticky top-0">
                   <tr>
-                    <th class="p-2.5">Time</th>
+                    <th class="p-2.5">Date & Time</th>
                     <th class="p-2.5">Title</th>
                     <th class="p-2.5">Category</th>
                     <th class="p-2.5">Payment</th>
@@ -586,7 +586,7 @@
                 <th class="p-3">Items Summary</th>
                 <th class="p-3">Payment</th>
                 <th class="p-3">Total</th>
-                <th class="p-3 text-right">Reprint Slip</th>
+                <th class="p-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody id="orders-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
@@ -1005,14 +1005,13 @@
     let toastTimeout = null;
 
     // Report Period State
-    let currentReportPeriod = 'today'; // 'today', 'month', 'custom'
-    let selectedCustomMonth = ''; // 'YYYY-MM'
+    let currentReportPeriod = 'today';
+    let selectedCustomMonth = '';
 
     /* =========================================================================
        4. REAL-TIME FIRESTORE SYNC LISTENERS
        ========================================================================= */
     window.addEventListener('DOMContentLoaded', () => {
-      // Set default input for month picker
       const now = new Date();
       const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       selectedCustomMonth = monthStr;
@@ -1864,7 +1863,6 @@
       const cashEl = document.getElementById('expense-kpi-cash');
       const countEl = document.getElementById('expense-kpi-count');
 
-      // Filter expenses for today's quick card
       const todayStr = new Date().toLocaleDateString('en-GB');
       const todayExpenses = expenseHistory.filter(e => e.dateStr === todayStr);
 
@@ -1980,6 +1978,9 @@
             <button onclick="trigger58mmThermalPrint(${order.token})" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl" title="Reprint Ticket">
               <i class="ph ph-printer text-base"></i>
             </button>
+            <button onclick="deleteSingleOrder(${order.token})" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl" title="Cancel/Remove Order">
+              <i class="ph ph-trash text-base"></i>
+            </button>
           </div>
         </div>
       `).join('');
@@ -2061,7 +2062,7 @@
     }
 
     /* =========================================================================
-       14. PERIOD FILTERING & SEARCH CONTROLLER (MONTHLY & TODAY)
+       14. PERIOD FILTERING & SEARCH CONTROLLER
        ========================================================================= */
     function setReportPeriod(period) {
       currentReportPeriod = period;
@@ -2096,13 +2097,11 @@
       filterOrdersTable();
     }
 
-    // Helper: checks if a record belongs to the selected period
     function isRecordInActivePeriod(record) {
       const now = new Date();
-      const todayStr = now.toLocaleDateString('en-GB'); // DD/MM/YYYY
+      const todayStr = now.toLocaleDateString('en-GB');
       const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      // record.timestamp is ISO string
       let recYearMonth = '';
       if (record.timestamp) {
         const d = new Date(record.timestamp);
@@ -2160,7 +2159,7 @@
     }
 
     /* =========================================================================
-       15. ORDER SEARCH & TABLE RENDERING
+       15. ORDER SEARCH, REMOVE ORDER & TABLE RENDERING
        ========================================================================= */
     function filterOrdersTable() {
       const query = (document.getElementById('order-search-input').value || '').toLowerCase().trim();
@@ -2205,9 +2204,14 @@
             </td>
             <td class="p-3 font-black text-rose-600">৳${order.total}</td>
             <td class="p-3 text-right">
-              <button onclick="trigger58mmThermalPrint(${order.token})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold">
-                <i class="ph ph-printer"></i> Slip
-              </button>
+              <div class="inline-flex items-center gap-1.5">
+                <button onclick="trigger58mmThermalPrint(${order.token})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold" title="Reprint 58mm slip">
+                  <i class="ph ph-printer"></i> Slip
+                </button>
+                <button onclick="deleteSingleOrder(${order.token})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-semibold" title="Remove sold item/order">
+                  <i class="ph ph-trash text-sm"></i>
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -2216,6 +2220,19 @@
 
     function renderReportsTable() {
       filterOrdersTable();
+    }
+
+    // REMOVE / DELETE SINGLE ORDER FUNCTION
+    async function deleteSingleOrder(token) {
+      if (confirm(`Are you sure you want to delete Order #${token} permanently from sales records?`)) {
+        try {
+          await db.collection('craves_orders').doc(`token_${token}`).delete();
+          showToast(`Order #${token} removed successfully.`);
+        } catch (err) {
+          console.error('Delete error:', err);
+          showToast('Failed to remove order.', 'ph-warning', true);
+        }
+      }
     }
 
     async function clearAllOrdersHistory() {
@@ -2555,4 +2572,4 @@
     }
   </script>
 </body>
-      </html>
+            </html>

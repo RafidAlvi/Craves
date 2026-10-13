@@ -1148,6 +1148,7 @@
 
     let cart = [];
     let activeChannel = 'Dine-In';
+    let currentTab = 'pos';
     let manualDiscount = 0;
     let selectedPayment = 'Cash';
 
@@ -1176,8 +1177,66 @@
     let dueSettleMethod = 'Cash';
 
     /* =========================================================================
-       4. INITIALIZATION & REAL-TIME LISTENERS
+       4. INITIALIZATION & HISTORY NAVIGATION (BACKPRESS LOGIC)
        ========================================================================= */
+    function isAnyModalOpen() {
+      const modals = [
+        document.getElementById('modal-item-config'),
+        document.getElementById('modal-order-confirm'),
+        document.getElementById('modal-order-success'),
+        document.getElementById('modal-adjust-due'),
+        document.getElementById('mobile-cart-drawer')
+      ];
+      return modals.some(m => m && m.style.display !== 'none' && m.style.display !== '');
+    }
+
+    function closeAllModals() {
+      const configModal = document.getElementById('modal-item-config');
+      const confirmModal = document.getElementById('modal-order-confirm');
+      const successModal = document.getElementById('modal-order-success');
+      const dueModal = document.getElementById('modal-adjust-due');
+      const mobileDrawer = document.getElementById('mobile-cart-drawer');
+
+      if (configModal) configModal.style.display = 'none';
+      if (confirmModal) confirmModal.style.display = 'none';
+      if (successModal) successModal.style.display = 'none';
+      if (dueModal) dueModal.style.display = 'none';
+      if (mobileDrawer) mobileDrawer.style.display = 'none';
+
+      configuredItem = null;
+      configuredVariant = null;
+      configuredAddons = [];
+      adjustingOrder = null;
+    }
+
+    // Set initial history state trap
+    history.pushState({ page: 'admin' }, '');
+
+    window.addEventListener('popstate', function(event) {
+      // 1. If any modal or cart drawer is open, close it and stay in the panel
+      if (isAnyModalOpen()) {
+        closeAllModals();
+        history.pushState({ page: 'admin' }, '');
+        return;
+      }
+
+      // 2. If user is in another tab (KDS, Menu, Expense, Reports), return to POS
+      if (currentTab !== 'pos') {
+        switchTab('pos');
+        history.pushState({ page: 'admin' }, '');
+        return;
+      }
+
+      // 3. If in POS section with no modals open, show exit confirmation prompt
+      const confirmExit = confirm("Are you sure you want to exit the admin panel and return to the main page?");
+      if (confirmExit) {
+        window.location.href = "index.html";
+      } else {
+        // Keep user inside admin panel
+        history.pushState({ page: 'admin' }, '');
+      }
+    });
+
     window.addEventListener('DOMContentLoaded', () => {
       const now = new Date();
       const todayISO = now.toISOString().split('T')[0];
@@ -1334,6 +1393,7 @@
        6. TAB NAVIGATION
        ========================================================================= */
     function switchTab(tabId) {
+      currentTab = tabId;
       document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active', 'text-rose-600', 'bg-white', 'shadow-xs');
@@ -1422,7 +1482,7 @@
     }
 
     /* =========================================================================
-       8. POS MENU CATALOG (WITH BIG/SMALL FONT RESIZING)
+       8. POS MENU CATALOG
        ========================================================================= */
     function renderMenu() {
       const grid = document.getElementById('menu-grid');
@@ -1444,7 +1504,6 @@
         return;
       }
 
-      // Font size styles based on switcher
       let titleClass = 'text-xs font-bold';
       let bengaliClass = 'text-[11px]';
       let priceClass = 'text-xs font-extrabold';
@@ -3119,4 +3178,4 @@
     }
   </script>
 </body>
-                </html>
+</html>

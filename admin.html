@@ -27,7 +27,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
-  <!-- Firebase SDKs (Compat versions for single-file browser runtime) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
@@ -56,7 +56,7 @@
       display: none;
     }
 
-    /* 58MM THERMAL PRINTER PRECISION CSS (STRICT 1-PAGE DISPLAY:NONE FIX) */
+    /* 58MM THERMAL PRINTER PRECISION CSS */
     @media print {
       @page {
         size: 58mm auto;
@@ -125,7 +125,6 @@
           <div class="flex items-center gap-1.5">
             <h1 class="text-base font-extrabold text-slate-900 tracking-tight leading-none">CRAVES</h1>
             <span class="text-xs font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">ক্রেভ্স</span>
-            <!-- Live Cloud Status Indicator -->
             <span id="cloud-status-badge" class="flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full border border-emerald-200">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
             </span>
@@ -145,9 +144,9 @@
           <span class="hidden md:inline">Export CSV</span>
         </button>
 
-        <button onclick="downloadPeriodSummaryPNG()" title="Download sales & profit snapshot as PNG" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border border-slate-200">
+        <button onclick="downloadFullDayReportPNG()" title="Download full itemized report as PNG" class="flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
           <i class="ph ph-image text-base text-indigo-600"></i>
-          <span class="hidden md:inline">Summary PNG</span>
+          <span class="hidden md:inline">Report PNG</span>
         </button>
       </div>
     </div>
@@ -159,23 +158,23 @@
           <i class="ph ph-storefront text-base"></i> POS Terminal
         </button>
         <button onclick="switchTab('kds')" id="tab-btn-kds" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
-          <i class="ph ph-cooking-pot text-base"></i> Kitchen Display (KDS)
+          <i class="ph ph-cooking-pot text-base"></i> Kitchen (KDS)
           <span id="kds-pending-badge" class="bg-amber-500 text-white rounded-full text-[10px] px-1.5 py-0.2 font-bold hidden">0</span>
         </button>
         <button onclick="switchTab('menumgr')" id="tab-btn-menumgr" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
-          <i class="ph ph-fork-knife text-base"></i> Menu & Prices
+          <i class="ph ph-fork-knife text-base"></i> Menu & Categories
         </button>
         <button onclick="switchTab('expense')" id="tab-btn-expense" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
           <i class="ph ph-wallet text-base"></i> Expenses
         </button>
         <button onclick="switchTab('reports')" id="tab-btn-reports" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
-          <i class="ph ph-chart-line-up text-base"></i> Sales & Profit
+          <i class="ph ph-chart-line-up text-base"></i> Sales & Due Reports
         </button>
       </nav>
     </div>
   </header>
 
-  <!-- ================= NOTIFICATION TOAST (2s NON-BLOCKING) ================= -->
+  <!-- ================= NOTIFICATION TOAST (2s) ================= -->
   <div id="app-toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 translate-y-2">
     <div class="bg-slate-900 text-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 border border-slate-700 text-xs font-semibold">
       <i id="toast-icon" class="ph ph-check-circle text-emerald-400 text-base"></i>
@@ -189,28 +188,33 @@
     <!-- VIEW 1: POS TERMINAL -->
     <div id="view-pos" class="view-panel grid grid-cols-1 lg:grid-cols-12 gap-4">
       <div class="lg:col-span-8 flex flex-col gap-3">
-        <!-- Search & Filter Controls -->
+        <!-- Search, Font Size Switcher & Category Badges -->
         <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs space-y-3">
           <div class="flex items-center gap-2">
             <div class="relative flex-1">
               <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-base"></i>
-              <input type="text" id="menu-search-input" oninput="filterMenuItems()" placeholder="Search burgers, chow mein, coffee, juices..." class="w-full pl-9 pr-3 py-2 text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-rose-500 focus:bg-white transition" />
+              <input type="text" id="menu-search-input" oninput="filterMenuItems()" placeholder="Search items in English or Bengali..." class="w-full pl-9 pr-3 py-2 text-xs md:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-rose-500 focus:bg-white transition" />
             </div>
+
+            <!-- FONT & CARD SIZE SWITCHER -->
+            <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600">
+              <button onclick="setMenuDisplaySize('sm')" id="btn-size-sm" class="px-2 py-1.5 rounded-lg hover:text-slate-900" title="Compact size">A-</button>
+              <button onclick="setMenuDisplaySize('md')" id="btn-size-md" class="px-2 py-1.5 rounded-lg bg-white text-rose-600 shadow-2xs" title="Medium size">A</button>
+              <button onclick="setMenuDisplaySize('lg')" id="btn-size-lg" class="px-2 py-1.5 rounded-lg hover:text-slate-900" title="Extra Large font">A+</button>
+            </div>
+
             <a href="tel:+8801540340852" class="sm:hidden flex items-center justify-center w-9 h-9 bg-rose-50 text-rose-600 rounded-xl border border-rose-200" title="Hotline">
               <i class="ph ph-phone-call text-base"></i>
             </a>
           </div>
 
+          <!-- DYNAMIC CATEGORY FILTER CHIPS WITH ICONS & COLORS -->
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="category-filter-bar">
-            <button onclick="setCategoryFilter('all')" class="cat-chip active shrink-0 px-3 py-1.5 rounded-lg font-bold bg-rose-600 text-white">All Items</button>
-            <button onclick="setCategoryFilter('mains')" class="cat-chip shrink-0 px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Mains & Meals</button>
-            <button onclick="setCategoryFilter('snacks')" class="cat-chip shrink-0 px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Snacks & Sandwiches</button>
-            <button onclick="setCategoryFilter('juices')" class="cat-chip shrink-0 px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Fresh Juice</button>
-            <button onclick="setCategoryFilter('coffee')" class="cat-chip shrink-0 px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Coffee & Shakes</button>
-            <button onclick="setCategoryFilter('hot')" class="cat-chip shrink-0 px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Hot Beverages</button>
+            <!-- Dynamically Rendered -->
           </div>
         </div>
 
+        <!-- POS Items Grid -->
         <div id="menu-grid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
           <!-- Dynamically populated via Cloud Firestore -->
         </div>
@@ -286,7 +290,7 @@
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-xs">
         <div>
           <h2 class="text-base font-extrabold text-slate-900">Kitchen Display System (KDS)</h2>
-          <p class="text-xs text-slate-500">Live ticket queue synchronized in real-time across devices</p>
+          <p class="text-xs text-slate-500">Real-time tickets across all kitchen devices</p>
         </div>
         <button onclick="renderKDS()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1">
           <i class="ph ph-arrow-clockwise text-sm"></i> Refresh Queue
@@ -296,114 +300,168 @@
       <div id="kds-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5"></div>
     </div>
 
-    <!-- VIEW 3: MENU & PRICES MANAGER (WITH VARIANTS SUPPORT) -->
+    <!-- VIEW 3: MENU & CATEGORY MANAGER -->
     <div id="view-menumgr" class="view-panel hidden space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Add New Menu Item Form -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-          <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
-            <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-              <i class="ph ph-plus-circle text-lg"></i>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        <!-- Left: Item & Category Forms -->
+        <div class="lg:col-span-5 space-y-4">
+          <!-- CATEGORY MANAGER CARD -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <i class="ph ph-tag text-lg"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-slate-900">Add / Edit Category</h3>
+                <p class="text-[11px] text-slate-500">Assign color themes & icons for visual identification</p>
+              </div>
             </div>
-            <div>
-              <h3 class="text-sm font-extrabold text-slate-900">Add / Edit Menu Item</h3>
-              <p class="text-[11px] text-slate-500">Configure single price or multiple sizes/portions</p>
+
+            <form onsubmit="handleCategorySubmit(event)" class="space-y-2.5 text-xs">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-bold text-slate-600 mb-1">Category ID (key)</label>
+                  <input type="text" id="cat-id-input" required placeholder="e.g. desserts" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs focus:border-indigo-500" />
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-600 mb-1">Category Title</label>
+                  <input type="text" id="cat-name-input" required placeholder="e.g. Desserts" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-bold text-slate-600 mb-1">Phosphor Icon</label>
+                  <select id="cat-icon-input" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500">
+                    <option value="ph-fork-knife">🍴 General Food</option>
+                    <option value="ph-hamburger">🍔 Burger / Fast Food</option>
+                    <option value="ph-bowl-food">🍜 Noodles / Chow Mein</option>
+                    <option value="ph-cookie">🥪 Snacks / Sandwich</option>
+                    <option value="ph-drop">🥤 Juices & Shakes</option>
+                    <option value="ph-coffee">☕ Coffee & Warm Drinks</option>
+                    <option value="ph-cake">🍰 Desserts & Sweets</option>
+                    <option value="ph-flame">🔥 Spicy / Special</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-600 mb-1">Badge Color Theme</label>
+                  <select id="cat-color-input" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500">
+                    <option value="rose">Rose (Reddish)</option>
+                    <option value="amber">Amber (Golden Orange)</option>
+                    <option value="emerald">Emerald (Green)</option>
+                    <option value="blue">Blue (Juice/Fresh)</option>
+                    <option value="purple">Purple (Shakes)</option>
+                    <option value="indigo">Indigo (Coffee/Snacks)</option>
+                    <option value="slate">Slate (Neutral)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-200 transition flex items-center justify-center gap-1.5">
+                <i class="ph ph-plus"></i> Save Category
+              </button>
+            </form>
+
+            <!-- Quick Category Pill List -->
+            <div id="menumgr-cats-pills" class="flex flex-wrap gap-1 pt-2 border-t border-slate-100">
+              <!-- Rendered dynamically -->
             </div>
           </div>
 
-          <form onsubmit="handleNewMenuItemSubmit(event)" class="space-y-3 text-xs">
-            <div>
-              <label class="block font-bold text-slate-600 mb-1">Item Name (English)</label>
-              <input type="text" id="new-item-name" required placeholder="e.g., Chicken Burger" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white" />
-            </div>
-
-            <div>
-              <label class="block font-bold text-slate-600 mb-1">Name (Bengali)</label>
-              <input type="text" id="new-item-bengali" required placeholder="e.g., চিকেন বার্গার" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block font-bold text-slate-600 mb-1">Category</label>
-                <select id="new-item-cat" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white">
-                  <option value="mains">Mains & Meals</option>
-                  <option value="snacks">Snacks & Sandwiches</option>
-                  <option value="juices">Fresh Juice</option>
-                  <option value="coffee">Coffee & Shakes</option>
-                  <option value="hot">Hot Beverages</option>
-                </select>
+          <!-- ADD MENU ITEM CARD -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+            <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+              <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                <i class="ph ph-plus-circle text-lg"></i>
               </div>
               <div>
-                <label class="block font-bold text-slate-600 mb-1">Add-on Group</label>
-                <select id="new-item-type" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white">
-                  <option value="food">Food (Cheese, Mayo, Naga)</option>
-                  <option value="drink">Beverage (Boba Pearls)</option>
-                  <option value="hot">None (Plain Item)</option>
-                </select>
+                <h3 class="text-sm font-extrabold text-slate-900">Add / Edit Menu Item</h3>
+                <p class="text-[11px] text-slate-500">Configure single price or multiple sizes</p>
               </div>
             </div>
 
-            <!-- PRICING MODE TOGGLE -->
-            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-              <label class="block font-bold text-slate-700">Pricing Mode</label>
-              <div class="grid grid-cols-2 gap-1 bg-slate-200 p-0.5 rounded-lg text-center font-bold">
-                <button type="button" onclick="setPricingMode('single')" id="pmode-single" class="py-1 rounded bg-white text-slate-800 shadow-2xs">Single Price</button>
-                <button type="button" onclick="setPricingMode('variants')" id="pmode-variants" class="py-1 rounded text-slate-600">With Sizes / Variants</button>
+            <form onsubmit="handleNewMenuItemSubmit(event)" class="space-y-2.5 text-xs">
+              <div>
+                <label class="block font-bold text-slate-600 mb-0.5">Item Name (English)</label>
+                <input type="text" id="new-item-name" required placeholder="e.g. Chicken Burger" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500" />
               </div>
 
-              <!-- SINGLE PRICE INPUT -->
-              <div id="single-price-box">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mt-1 mb-0.5">Fixed Price (৳)</label>
-                <input type="number" id="new-item-price" min="1" placeholder="120" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-bold" />
+              <div>
+                <label class="block font-bold text-slate-600 mb-0.5">Name (Bengali)</label>
+                <input type="text" id="new-item-bengali" required placeholder="e.g. চিকেন বার্গার" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500" />
               </div>
 
-              <!-- MULTI-VARIANT BUILDER -->
-              <div id="variants-builder-box" class="space-y-2" style="display: none;">
-                <div class="flex items-center justify-between">
-                  <span class="text-[11px] font-bold text-slate-600">Sizes / Portions</span>
-                  <button type="button" onclick="addVariantRow()" class="text-[11px] font-bold text-rose-600 hover:underline">+ Add Size</button>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-bold text-slate-600 mb-0.5">Category</label>
+                  <select id="new-item-cat" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500">
+                    <!-- Loaded dynamically from categories -->
+                  </select>
                 </div>
-                <div id="variants-inputs-list" class="space-y-1.5">
-                  <div class="flex gap-1.5 variant-row">
-                    <input type="text" placeholder="Size (e.g. Regular)" value="Regular" class="w-3/5 px-2 py-1 text-xs bg-white border border-slate-200 rounded-lg v-name" />
-                    <input type="number" placeholder="৳ Price" class="w-2/5 px-2 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg v-price" />
-                    <button type="button" onclick="removeVariantRow(this)" class="px-1 text-slate-400 hover:text-rose-600">✕</button>
-                  </div>
-                  <div class="flex gap-1.5 variant-row">
-                    <input type="text" placeholder="Size (e.g. Large)" value="Large" class="w-3/5 px-2 py-1 text-xs bg-white border border-slate-200 rounded-lg v-name" />
-                    <input type="number" placeholder="৳ Price" class="w-2/5 px-2 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg v-price" />
-                    <button type="button" onclick="removeVariantRow(this)" class="px-1 text-slate-400 hover:text-rose-600">✕</button>
-                  </div>
+                <div>
+                  <label class="block font-bold text-slate-600 mb-0.5">Add-on Group</label>
+                  <select id="new-item-type" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500">
+                    <option value="food">Food (Cheese, Mayo, Naga)</option>
+                    <option value="drink">Beverage (Boba Pearls)</option>
+                    <option value="hot">None (Plain Item)</option>
+                  </select>
                 </div>
               </div>
-            </div>
 
-            <button type="submit" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-md shadow-rose-200 transition flex items-center justify-center gap-1.5">
-              <i class="ph ph-cloud-arrow-up"></i>
-              <span>Save & Publish Online</span>
-            </button>
-          </form>
+              <!-- PRICING MODE TOGGLE -->
+              <div class="p-2 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                <div class="grid grid-cols-2 gap-1 bg-slate-200 p-0.5 rounded-lg text-center font-bold">
+                  <button type="button" onclick="setPricingMode('single')" id="pmode-single" class="py-1 rounded bg-white text-slate-800 shadow-2xs">Single Price</button>
+                  <button type="button" onclick="setPricingMode('variants')" id="pmode-variants" class="py-1 rounded text-slate-600">With Sizes</button>
+                </div>
+
+                <div id="single-price-box">
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Fixed Price (৳)</label>
+                  <input type="number" id="new-item-price" min="1" placeholder="120" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-bold" />
+                </div>
+
+                <div id="variants-builder-box" class="space-y-1.5" style="display: none;">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-600">Portions / Sizes</span>
+                    <button type="button" onclick="addVariantRow()" class="text-[11px] font-bold text-rose-600 hover:underline">+ Add Size</button>
+                  </div>
+                  <div id="variants-inputs-list" class="space-y-1.5">
+                    <div class="flex gap-1.5 variant-row">
+                      <input type="text" placeholder="Size" value="Regular" class="w-3/5 px-2 py-1 text-xs bg-white border border-slate-200 rounded-lg v-name" />
+                      <input type="number" placeholder="৳" class="w-2/5 px-2 py-1 text-xs font-bold bg-white border border-slate-200 rounded-lg v-price" />
+                      <button type="button" onclick="removeVariantRow(this)" class="px-1 text-slate-400 hover:text-rose-600">✕</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-md shadow-rose-200 transition flex items-center justify-center gap-1.5">
+                <i class="ph ph-cloud-arrow-up"></i> Save Item Online
+              </button>
+            </form>
+          </div>
         </div>
 
-        <!-- Live Menu Items Table -->
-        <div class="md:col-span-2 space-y-3">
+        <!-- Right: Current Online Menu Table -->
+        <div class="lg:col-span-7 space-y-3">
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
             <div class="p-3 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h4 class="text-xs font-bold text-slate-800">Current Online Menu Items</h4>
-                <p class="text-[11px] text-slate-400">Edit fixed prices or variant prices directly below</p>
+                <p class="text-[11px] text-slate-400">Edit prices in-place and click Update</p>
               </div>
               <button onclick="restoreDefaultMenuOnline()" class="text-[11px] text-rose-600 hover:underline font-semibold">
-                Reset Default Menu
+                Reset Standard Menu
               </button>
             </div>
-            <div class="overflow-x-auto max-h-[500px]">
+            <div class="overflow-x-auto max-h-[640px]">
               <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider sticky top-0">
                   <tr>
                     <th class="p-2.5">Item Name</th>
                     <th class="p-2.5">Category</th>
-                    <th class="p-2.5">Price / Variants (৳)</th>
+                    <th class="p-2.5">Price / Sizes (৳)</th>
                     <th class="p-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -412,6 +470,7 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -425,8 +484,8 @@
               <i class="ph ph-plus-circle text-lg"></i>
             </div>
             <div>
-              <h3 class="text-sm font-extrabold text-slate-900">Add Daily Expense</h3>
-              <p class="text-[11px] text-slate-500">Record costs (raw materials, wages, bills)</p>
+              <h3 class="text-sm font-extrabold text-slate-900">Add Expense</h3>
+              <p class="text-[11px] text-slate-500">Record purchases, raw items, daily wages</p>
             </div>
           </div>
 
@@ -512,22 +571,37 @@
       </div>
     </div>
 
-    <!-- VIEW 5: SALES REPORTS, MONTHLY CALCULATION & ORDER SEARCH -->
+    <!-- VIEW 5: SALES REPORTS, SELECTIVE DATE RANGE & DUE ADJUSTMENT -->
     <div id="view-reports" class="view-panel hidden space-y-4">
       
-      <!-- PERIOD SELECTOR BAR (TODAY / THIS MONTH / CUSTOM MONTH) -->
+      <!-- PERIOD SELECTOR BAR WITH DATE RANGE FILTER -->
       <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <i class="ph ph-calendar text-rose-600 text-lg"></i>
-          <span class="text-xs font-extrabold text-slate-900">Report Timeline:</span>
-          <div class="inline-flex p-0.5 bg-slate-100 rounded-xl text-xs font-bold">
-            <button onclick="setReportPeriod('today')" id="period-btn-today" class="px-3 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition">Today</button>
-            <button onclick="setReportPeriod('month')" id="period-btn-month" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">This Month</button>
-            <button onclick="setReportPeriod('custom')" id="period-btn-custom" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">Pick Month</button>
+          <span class="text-xs font-extrabold text-slate-900">Timeline:</span>
+          <div class="inline-flex p-0.5 bg-slate-100 rounded-xl text-xs font-bold flex-wrap gap-0.5">
+            <button onclick="setReportPeriod('today')" id="period-btn-today" class="px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition">Today</button>
+            <button onclick="setReportPeriod('range')" id="period-btn-range" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">Date Range</button>
+            <button onclick="setReportPeriod('month')" id="period-btn-month" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">This Month</button>
+            <button onclick="setReportPeriod('custom')" id="period-btn-custom" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">Pick Month</button>
           </div>
         </div>
 
-        <div id="custom-month-container" class="flex items-center gap-2" style="display: none;">
+        <!-- SELECTIVE DATE RANGE FILTER -->
+        <div id="date-range-container" class="flex items-center gap-1.5 flex-wrap" style="display: none;">
+          <div class="flex items-center gap-1 text-xs">
+            <span class="text-slate-400 font-bold">From:</span>
+            <input type="date" id="report-date-start" onchange="onDateRangeChange()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2 py-1 focus:border-rose-500" />
+          </div>
+          <div class="flex items-center gap-1 text-xs">
+            <span class="text-slate-400 font-bold">To:</span>
+            <input type="date" id="report-date-end" onchange="onDateRangeChange()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2 py-1 focus:border-rose-500" />
+          </div>
+        </div>
+
+        <!-- Month Picker -->
+        <div id="custom-month-container" class="flex items-center gap-1.5" style="display: none;">
+          <label class="text-[11px] font-bold text-slate-500">Month:</label>
           <input type="month" id="report-month-input" onchange="onCustomMonthChange()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:border-rose-500" />
         </div>
       </div>
@@ -547,25 +621,25 @@
           <p id="kpi-today-profit" class="text-xl font-extrabold text-indigo-600 mt-1">৳0</p>
         </div>
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Orders Processed</span>
-          <p id="kpi-today-cash" class="text-xl font-extrabold text-slate-900 mt-1">0</p>
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Unsettled Due</span>
+          <p id="kpi-unsettled-due" class="text-xl font-extrabold text-amber-600 mt-1">৳0</p>
         </div>
       </div>
 
       <!-- SEARCH ORDER NUMBER & LOGS CONTROL -->
       <div class="bg-white p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-        <div class="relative flex-1 min-w-[240px] max-w-sm">
+        <div class="relative flex-1 min-w-[220px] max-w-sm">
           <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-base"></i>
-          <input type="text" id="order-search-input" oninput="filterOrdersTable()" placeholder="Search Token # (e.g. 101), Customer, Table..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white transition" />
+          <input type="text" id="order-search-input" oninput="filterOrdersTable()" placeholder="Search Token # (e.g. 101), Customer, Due..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white transition" />
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <span id="reports-count-badge" class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold">0 records</span>
           <button onclick="downloadPeriodCSV()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1">
             <i class="ph ph-download-simple"></i> Export CSV
           </button>
-          <button onclick="downloadPeriodSummaryPNG()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 flex items-center gap-1">
-            <i class="ph ph-image"></i> Summary PNG
+          <button onclick="downloadFullDayReportPNG()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 flex items-center gap-1">
+            <i class="ph ph-file-image"></i> Report PNG
           </button>
           <button onclick="clearAllOrdersHistory()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold border border-rose-200">
             Clear Logs
@@ -583,7 +657,7 @@
                 <th class="p-3">Date & Time</th>
                 <th class="p-3">Channel / Table</th>
                 <th class="p-3">Items Summary</th>
-                <th class="p-3">Payment</th>
+                <th class="p-3">Payment & Due Status</th>
                 <th class="p-3">Total</th>
                 <th class="p-3 text-right">Actions</th>
               </tr>
@@ -705,7 +779,7 @@
     </div>
   </div>
 
-  <!-- ================= POPUP 1: ORDER CONFIRMATION & CASH/SPLIT CHANGE MODAL ================= -->
+  <!-- ================= POPUP 1: ORDER CONFIRMATION & CASH/SPLIT/DUE MODAL ================= -->
   <div id="modal-order-confirm" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3" style="display: none;">
     <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-5 border border-slate-200 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -739,10 +813,10 @@
         <div id="confirm-items-list" class="max-h-36 overflow-y-auto space-y-1 text-xs border border-slate-200 rounded-xl p-2.5 bg-white divide-y divide-slate-100"></div>
       </div>
 
-      <!-- Payment Method Selection (Cash, bKash, Card, Split) -->
+      <!-- Payment Method Selection -->
       <div>
         <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Payment Method</label>
-        <div class="grid grid-cols-4 gap-1.5 text-xs font-bold">
+        <div class="grid grid-cols-5 gap-1.5 text-xs font-bold">
           <button type="button" onclick="selectPaymentMethod('Cash')" id="pay-btn-cash" class="pay-btn py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition">
             <i class="ph ph-money text-base"></i> Cash
           </button>
@@ -755,10 +829,13 @@
           <button type="button" onclick="selectPaymentMethod('Split')" id="pay-btn-split" class="pay-btn py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition">
             <i class="ph ph-arrows-split text-base"></i> Split
           </button>
+          <button type="button" onclick="selectPaymentMethod('Due')" id="pay-btn-due" class="pay-btn py-2 px-1 rounded-xl border border-amber-300 text-amber-700 bg-amber-50 flex flex-col items-center justify-center gap-1 transition">
+            <i class="ph ph-clock-countdown text-base"></i> Due
+          </button>
         </div>
       </div>
 
-      <!-- CASH TENDERED & CHANGE RETURN CALCULATOR (FOR CASH PAYMENT) -->
+      <!-- CASH TENDERED -->
       <div id="cash-calculator-box" class="p-3 bg-amber-50/60 border border-amber-200 rounded-xl space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
@@ -790,7 +867,7 @@
         </div>
       </div>
 
-      <!-- SPLIT PAYMENT BREAKDOWN BOX (CASH + BKASH/NAGAD) -->
+      <!-- SPLIT PAYMENT BREAKDOWN -->
       <div id="split-calculator-box" class="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-2" style="display: none;">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-indigo-900 flex items-center gap-1">
@@ -808,6 +885,14 @@
             <input type="number" id="split-mfs-amount" oninput="calculateSplitValues('mfs')" placeholder="0" class="w-full bg-white border border-indigo-300 rounded-lg px-2.5 py-1.5 font-bold text-slate-900 focus:border-indigo-600" />
           </div>
         </div>
+      </div>
+
+      <!-- DUE NOTICE BOX -->
+      <div id="due-notice-box" class="p-3 bg-rose-50 border border-rose-200 rounded-xl space-y-1" style="display: none;">
+        <span class="text-xs font-bold text-rose-800 flex items-center gap-1">
+          <i class="ph ph-warning-circle"></i> Unpaid / Due Ticket
+        </span>
+        <p class="text-[11px] text-rose-600">The customer will pay later. You can clear or adjust this due status from the Sales tab at any time.</p>
       </div>
 
       <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
@@ -828,7 +913,7 @@
     </div>
   </div>
 
-  <!-- ================= POPUP 2: ORDER SUCCESS & PRINT/PNG MODAL ================= -->
+  <!-- ================= POPUP 2: ORDER SUCCESS ================= -->
   <div id="modal-order-success" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3" style="display: none;">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 border border-slate-200 shadow-2xl text-center space-y-4">
       <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-sm">
@@ -862,7 +947,44 @@
     </div>
   </div>
 
-  <!-- ================= ISOLATED DIRECT PRINT DOM CONTAINER (58MM ROLL CENTERED) ================= -->
+  <!-- ================= POPUP 3: ADJUST & SETTLE DUE MODAL ================= -->
+  <div id="modal-adjust-due" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3" style="display: none;">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-4 border border-slate-200 shadow-2xl space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900" id="due-modal-title">Settle Due for Order</h3>
+          <p class="text-[11px] text-slate-500" id="due-modal-subtitle">Customer: Walk-in • Amount: ৳0</p>
+        </div>
+        <button onclick="closeAdjustDueModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+          <i class="ph ph-x text-base"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Select How Customer Paid Now:</label>
+          <div class="grid grid-cols-3 gap-1.5 text-xs font-bold">
+            <button type="button" onclick="selectDueSettleMethod('Cash')" id="settle-btn-cash" class="py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition">
+              <i class="ph ph-money text-base"></i> Cash
+            </button>
+            <button type="button" onclick="selectDueSettleMethod('bKash/Nagad')" id="settle-btn-mfs" class="py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition">
+              <i class="ph ph-device-mobile text-base"></i> bKash
+            </button>
+            <button type="button" onclick="selectDueSettleMethod('Card')" id="settle-btn-card" class="py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition">
+              <i class="ph ph-credit-card text-base"></i> Card
+            </button>
+          </div>
+        </div>
+
+        <button onclick="confirmSettleDue()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md shadow-emerald-200 transition flex items-center justify-center gap-1.5">
+          <i class="ph ph-check-circle"></i>
+          <span>Mark as Paid & Update Cloud</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ISOLATED 58MM PRINT DOM ================= -->
   <div id="print-thermal-receipt" aria-hidden="true">
     <div class="receipt-box font-mono-receipt">
       <div style="font-weight: 800; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase;">CRAVES • ক্রেভ্স</div>
@@ -887,7 +1009,7 @@
         </tr>
         <tr>
           <td style="text-align: left; font-size: 9px;" id="pr-payment">Pay: Cash</td>
-          <td style="text-align: right; font-size: 9px;">Status: Paid</td>
+          <td style="text-align: right; font-size: 9px;" id="pr-status">Status: Paid</td>
         </tr>
       </table>
 
@@ -940,7 +1062,7 @@
 
   <canvas id="hidden-receipt-canvas" style="display: none;"></canvas>
 
-  <!-- ================= FIREBASE & JAVASCRIPT APPLICATION LOGIC ================= -->
+  <!-- ================= FIREBASE & JAVASCRIPT LOGIC ================= -->
   <script>
     /* =========================================================================
        1. FIREBASE INITIALIZATION & CONFIGURATION
@@ -963,8 +1085,16 @@
     });
 
     /* =========================================================================
-       2. DEFAULT CRAVES MENU
+       2. DEFAULT CRAVES CATEGORIES (CUSTOMIZABLE WITH ICONS & COLORS)
        ========================================================================= */
+    const DEFAULT_CATEGORIES = [
+      { id: 'mains', name: 'Mains & Meals', icon: 'ph-hamburger', color: 'rose' },
+      { id: 'snacks', name: 'Snacks & Sandwich', icon: 'ph-cookie', color: 'amber' },
+      { id: 'juices', name: 'Fresh Juice', icon: 'ph-drop', color: 'blue' },
+      { id: 'coffee', name: 'Coffee & Shakes', icon: 'ph-coffee', color: 'purple' },
+      { id: 'hot', name: 'Hot Beverages', icon: 'ph-flame', color: 'indigo' }
+    ];
+
     const DEFAULT_CRAVES_MENU = [
       { id: 'bpm', name: 'Big Patty Burger', bengali: 'বিগ প্যাটি বার্গার', category: 'mains', type: 'food', price: 199, variants: null },
       { id: 'ccm', name: 'Chicken Chow Mein', bengali: 'চিকেন চাউমিন', category: 'mains', type: 'food', price: 120, variants: null },
@@ -1010,6 +1140,7 @@
     /* =========================================================================
        3. LIVE APP STATE
        ========================================================================= */
+    let liveCategories = JSON.parse(localStorage.getItem('craves_categories')) || DEFAULT_CATEGORIES;
     let liveMenu = [];
     let orderHistory = [];
     let expenseHistory = [];
@@ -1024,6 +1155,9 @@
     let splitCash = 0;
     let splitMfs = 0;
 
+    // Menu Font/Display Size (sm, md, lg)
+    let menuDisplaySize = localStorage.getItem('craves_menu_size') || 'md';
+
     let configuredItem = null;
     let configuredVariant = null;
     let configuredAddons = [];
@@ -1031,25 +1165,86 @@
     let latestOrder = null;
     let toastTimeout = null;
 
-    // Report Period State
+    // Report Period State (today, range, month, custom)
     let currentReportPeriod = 'today';
+    let selectedStartDate = ''; // 'YYYY-MM-DD'
+    let selectedEndDate = '';   // 'YYYY-MM-DD'
     let selectedCustomMonth = '';
 
+    // Due Adjustment State
+    let adjustingOrder = null;
+    let dueSettleMethod = 'Cash';
+
     /* =========================================================================
-       4. REAL-TIME FIRESTORE SYNC LISTENERS
+       4. INITIALIZATION & REAL-TIME LISTENERS
        ========================================================================= */
     window.addEventListener('DOMContentLoaded', () => {
       const now = new Date();
+      const todayISO = now.toISOString().split('T')[0];
       const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      selectedStartDate = todayISO;
+      selectedEndDate = todayISO;
       selectedCustomMonth = monthStr;
+
+      const startInput = document.getElementById('report-date-start');
+      const endInput = document.getElementById('report-date-end');
       const monthInput = document.getElementById('report-month-input');
+
+      if (startInput) startInput.value = todayISO;
+      if (endInput) endInput.value = todayISO;
       if (monthInput) monthInput.value = monthStr;
 
+      setMenuDisplaySize(menuDisplaySize);
+
+      listenToOnlineCategories();
       listenToOnlineMenu();
       listenToOnlineOrders();
       listenToOnlineExpenses();
       renderCart();
     });
+
+    function setMenuDisplaySize(size) {
+      menuDisplaySize = size;
+      localStorage.setItem('craves_menu_size', size);
+
+      ['sm', 'md', 'lg'].forEach(s => {
+        const btn = document.getElementById(`btn-size-${s}`);
+        if (btn) {
+          if (s === size) {
+            btn.className = 'px-2 py-1.5 rounded-lg bg-white text-rose-600 shadow-2xs font-extrabold';
+          } else {
+            btn.className = 'px-2 py-1.5 rounded-lg hover:text-slate-900';
+          }
+        }
+      });
+      renderMenu();
+    }
+
+    function listenToOnlineCategories() {
+      db.collection('craves_categories').onSnapshot((snapshot) => {
+        if (snapshot.empty) {
+          DEFAULT_CATEGORIES.forEach(c => {
+            db.collection('craves_categories').doc(c.id).set(c);
+          });
+          liveCategories = [...DEFAULT_CATEGORIES];
+        } else {
+          liveCategories = [];
+          snapshot.forEach(doc => {
+            liveCategories.push({ ...doc.data(), id: doc.id });
+          });
+        }
+        localStorage.setItem('craves_categories', JSON.stringify(liveCategories));
+        renderCategoryFilterBar();
+        renderMenuManagerCategories();
+        renderCategoryDropdown();
+      }, (err) => {
+        console.warn('Categories sync notice:', err);
+        renderCategoryFilterBar();
+        renderMenuManagerCategories();
+        renderCategoryDropdown();
+      });
+    }
 
     function listenToOnlineMenu() {
       db.collection('craves_menu').onSnapshot((snapshot) => {
@@ -1114,7 +1309,7 @@
     }
 
     /* =========================================================================
-       5. NOTIFICATION TOAST (2s NON-BLOCKING)
+       5. NOTIFICATION TOAST
        ========================================================================= */
     function showToast(msg, icon = 'ph-check-circle', isError = false) {
       const toast = document.getElementById('app-toast');
@@ -1167,18 +1362,49 @@
     }
 
     /* =========================================================================
-       7. POS MENU CATALOG & FILTERS
+       7. CATEGORY CHIPS, COLORS & ICONS
        ========================================================================= */
     let currentCategoryFilter = 'all';
 
-    function setCategoryFilter(cat) {
-      currentCategoryFilter = cat;
-      document.querySelectorAll('.cat-chip').forEach(btn => {
-        btn.classList.remove('bg-rose-600', 'text-white', 'font-bold');
-        btn.classList.add('bg-slate-100', 'text-slate-700', 'font-medium');
+    const COLOR_MAP = {
+      rose: { bg: 'bg-rose-50', text: 'text-rose-700', active: 'bg-rose-600 text-white', border: 'border-rose-200' },
+      amber: { bg: 'bg-amber-50', text: 'text-amber-800', active: 'bg-amber-600 text-white', border: 'border-amber-200' },
+      emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', active: 'bg-emerald-600 text-white', border: 'border-emerald-200' },
+      blue: { bg: 'bg-sky-50', text: 'text-sky-700', active: 'bg-sky-600 text-white', border: 'border-sky-200' },
+      purple: { bg: 'bg-purple-50', text: 'text-purple-700', active: 'bg-purple-600 text-white', border: 'border-purple-200' },
+      indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', active: 'bg-indigo-600 text-white', border: 'border-indigo-200' },
+      slate: { bg: 'bg-slate-100', text: 'text-slate-700', active: 'bg-slate-800 text-white', border: 'border-slate-200' }
+    };
+
+    function renderCategoryFilterBar() {
+      const container = document.getElementById('category-filter-bar');
+      if (!container) return;
+
+      let html = `
+        <button onclick="setCategoryFilter('all')" class="cat-chip shrink-0 px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${currentCategoryFilter === 'all' ? 'bg-rose-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+          <i class="ph ph-squares-four text-sm"></i>
+          <span>All Items</span>
+        </button>
+      `;
+
+      liveCategories.forEach(c => {
+        const theme = COLOR_MAP[c.color] || COLOR_MAP.slate;
+        const isActive = currentCategoryFilter === c.id;
+
+        html += `
+          <button onclick="setCategoryFilter('${c.id}')" class="cat-chip shrink-0 px-3 py-1.5 rounded-lg font-bold border transition flex items-center gap-1.5 ${isActive ? theme.active : `${theme.bg} ${theme.text} ${theme.border} hover:opacity-90`}">
+            <i class="ph ${c.icon || 'ph-tag'} text-sm"></i>
+            <span>${c.name}</span>
+          </button>
+        `;
       });
-      event.target.classList.remove('bg-slate-100', 'text-slate-700', 'font-medium');
-      event.target.classList.add('bg-rose-600', 'text-white', 'font-bold');
+
+      container.innerHTML = html;
+    }
+
+    function setCategoryFilter(catId) {
+      currentCategoryFilter = catId;
+      renderCategoryFilterBar();
       renderMenu();
     }
 
@@ -1186,6 +1412,18 @@
       renderMenu();
     }
 
+    function renderCategoryDropdown() {
+      const dropdown = document.getElementById('new-item-cat');
+      if (!dropdown) return;
+
+      dropdown.innerHTML = liveCategories.map(c => `
+        <option value="${c.id}">${c.name}</option>
+      `).join('');
+    }
+
+    /* =========================================================================
+       8. POS MENU CATALOG (WITH BIG/SMALL FONT RESIZING)
+       ========================================================================= */
     function renderMenu() {
       const grid = document.getElementById('menu-grid');
       const searchQuery = (document.getElementById('menu-search-input').value || '').toLowerCase().trim();
@@ -1206,23 +1444,49 @@
         return;
       }
 
+      // Font size styles based on switcher
+      let titleClass = 'text-xs font-bold';
+      let bengaliClass = 'text-[11px]';
+      let priceClass = 'text-xs font-extrabold';
+      let cardPadding = 'p-3';
+
+      if (menuDisplaySize === 'sm') {
+        titleClass = 'text-[11px] font-bold';
+        bengaliClass = 'text-[10px]';
+        priceClass = 'text-[11px] font-black';
+        cardPadding = 'p-2.5';
+      } else if (menuDisplaySize === 'lg') {
+        titleClass = 'text-sm font-extrabold';
+        bengaliClass = 'text-xs font-semibold';
+        priceClass = 'text-base font-black';
+        cardPadding = 'p-3.5';
+      }
+
       grid.innerHTML = filtered.map(item => {
+        const catObj = liveCategories.find(c => c.id === item.category);
+        const catColorTheme = catObj ? (COLOR_MAP[catObj.color] || COLOR_MAP.slate) : COLOR_MAP.slate;
+        const catIcon = catObj ? catObj.icon : 'ph-tag';
+
         const hasVariants = item.variants && item.variants.length > 0;
         const baseDisplayPrice = hasVariants ? item.variants[0].price : item.price;
 
         return `
-          <div onclick="handleItemClick('${item.id}')" class="bg-white rounded-xl p-3 border border-slate-200/80 shadow-2xs hover:border-rose-400 hover:shadow-md transition cursor-pointer relative flex flex-col justify-between">
+          <div onclick="handleItemClick('${item.id}')" class="bg-white rounded-xl ${cardPadding} border border-slate-200/80 shadow-2xs hover:border-rose-400 hover:shadow-md transition cursor-pointer relative flex flex-col justify-between group">
             <div>
-              <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block mb-1">${item.category}</span>
-              <h3 class="text-xs font-bold text-slate-900 leading-snug line-clamp-1">${item.name}</h3>
-              <p class="text-[11px] text-slate-500 font-medium">${item.bengali || ''}</p>
+              <div class="flex items-center justify-between gap-1 mb-1.5">
+                <span class="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${catColorTheme.bg} ${catColorTheme.text}">
+                  <i class="ph ${catIcon}"></i> ${catObj ? catObj.name : item.category}
+                </span>
+              </div>
+              <h3 class="${titleClass} text-slate-900 leading-snug line-clamp-1">${item.name}</h3>
+              <p class="${bengaliClass} text-slate-500 font-medium">${item.bengali || ''}</p>
             </div>
 
             <div class="mt-3 flex items-center justify-between pt-2 border-t border-slate-50">
-              <span class="text-xs font-extrabold text-rose-600">
+              <span class="${priceClass} text-rose-600">
                 ৳${baseDisplayPrice}${hasVariants ? '<span class="text-[10px] font-normal text-slate-400">+</span>' : ''}
               </span>
-              <button class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm font-bold hover:bg-rose-600 hover:text-white transition">
+              <button class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm font-bold group-hover:bg-rose-600 group-hover:text-white transition">
                 +
               </button>
             </div>
@@ -1489,7 +1753,7 @@
     }
 
     /* =========================================================================
-       8. POPUP 1: ORDER CONFIRMATION & CASH/SPLIT CHANGE
+       9. ORDER CONFIRMATION & PAYMENT MODAL
        ========================================================================= */
     function openOrderConfirmModal() {
       if (cart.length === 0) {
@@ -1535,20 +1799,23 @@
       selectedPayment = method;
       const calcBox = document.getElementById('cash-calculator-box');
       const splitBox = document.getElementById('split-calculator-box');
+      const dueBox = document.getElementById('due-notice-box');
       const payable = getPayableAmount();
 
-      ['cash', 'mfs', 'card', 'split'].forEach(id => {
+      ['cash', 'mfs', 'card', 'split', 'due'].forEach(id => {
         const btn = document.getElementById(`pay-btn-${id}`);
         if (btn) btn.className = 'pay-btn py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition';
       });
 
+      calcBox.style.display = 'none';
+      splitBox.style.display = 'none';
+      dueBox.style.display = 'none';
+
       if (method === 'Cash') {
         document.getElementById('pay-btn-cash').className = 'pay-btn py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition';
         calcBox.style.display = 'block';
-        splitBox.style.display = 'none';
       } else if (method === 'Split') {
         document.getElementById('pay-btn-split').className = 'pay-btn py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition';
-        calcBox.style.display = 'none';
         splitBox.style.display = 'block';
 
         const half = Math.round(payable / 2);
@@ -1556,11 +1823,12 @@
         document.getElementById('split-mfs-amount').value = payable - half;
         splitCash = half;
         splitMfs = payable - half;
+      } else if (method === 'Due') {
+        document.getElementById('pay-btn-due').className = 'pay-btn py-2 px-1 rounded-xl border border-amber-500 bg-amber-100 text-amber-800 flex flex-col items-center justify-center gap-1 transition';
+        dueBox.style.display = 'block';
       } else {
         const activeId = method === 'bKash/Nagad' ? 'mfs' : 'card';
         document.getElementById(`pay-btn-${activeId}`).className = 'pay-btn py-2 px-1 rounded-xl border border-rose-500 bg-rose-50 text-rose-700 flex flex-col items-center justify-center gap-1 transition';
-        calcBox.style.display = 'none';
-        splitBox.style.display = 'none';
       }
     }
 
@@ -1609,7 +1877,7 @@
     }
 
     /* =========================================================================
-       9. ORDER SUBMISSION (SAVES TO CLOUD FIRESTORE)
+       10. ORDER SUBMISSION (FIRESTORE)
        ========================================================================= */
     async function finalizeAndCreateOrder() {
       if (cart.length === 0) return;
@@ -1628,6 +1896,8 @@
         changeReturned = Math.max(0, cashTendered - finalPayable);
       } else if (selectedPayment === 'Split') {
         cashTendered = splitCash;
+      } else if (selectedPayment === 'Due') {
+        cashTendered = 0;
       }
 
       const assignedToken = currentTokenNumber;
@@ -1645,6 +1915,7 @@
         discount: manualDiscount,
         total: finalPayable,
         payment: selectedPayment === 'Split' ? `Split (Cash ৳${splitCash} + bKash ৳${splitMfs})` : selectedPayment,
+        paymentStatus: selectedPayment === 'Due' ? 'Due' : 'Paid',
         cashTendered: cashTendered,
         splitCash: selectedPayment === 'Split' ? splitCash : 0,
         splitMfs: selectedPayment === 'Split' ? splitMfs : 0,
@@ -1669,7 +1940,7 @@
       renderCart();
 
       document.getElementById('success-token-title').innerText = `TOKEN #${assignedToken}`;
-      document.getElementById('success-token-meta').innerText = `৳${newOrder.total} • ${newOrder.payment} (${newOrder.channel})`;
+      document.getElementById('success-token-meta').innerText = `৳${newOrder.total} • ${newOrder.payment} (${newOrder.paymentStatus})`;
       document.getElementById('modal-order-success').style.display = 'flex';
     }
 
@@ -1678,7 +1949,62 @@
     }
 
     /* =========================================================================
-       10. MENU MANAGER (ONLINE ADD / EDIT / DELETE / VARIANTS)
+       11. CATEGORY CREATION & MANAGEMENT
+       ========================================================================= */
+    async function handleCategorySubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('cat-id-input').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      const name = document.getElementById('cat-name-input').value.trim();
+      const icon = document.getElementById('cat-icon-input').value;
+      const color = document.getElementById('cat-color-input').value;
+
+      if (!id || !name) {
+        showToast('Please provide valid category key and name.', 'ph-warning', true);
+        return;
+      }
+
+      const categoryObj = { id, name, icon, color };
+
+      try {
+        await db.collection('craves_categories').doc(id).set(categoryObj);
+        showToast(`Category "${name}" saved!`);
+        document.getElementById('cat-id-input').value = '';
+        document.getElementById('cat-name-input').value = '';
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to save category online.', 'ph-warning', true);
+      }
+    }
+
+    function renderMenuManagerCategories() {
+      const container = document.getElementById('menumgr-cats-pills');
+      if (!container) return;
+
+      container.innerHTML = liveCategories.map(c => {
+        const theme = COLOR_MAP[c.color] || COLOR_MAP.slate;
+        return `
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold ${theme.bg} ${theme.text} ${theme.border}">
+            <i class="ph ${c.icon}"></i>
+            <span>${c.name}</span>
+            <button onclick="deleteCategory('${c.id}')" class="text-slate-400 hover:text-rose-600 pl-1" title="Delete category">✕</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function deleteCategory(catId) {
+      if (confirm(`Delete category "${catId}"? Items under it will remain.`)) {
+        try {
+          await db.collection('craves_categories').doc(catId).delete();
+          showToast(`Category deleted.`);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    }
+
+    /* =========================================================================
+       12. MENU ITEM CRUD
        ========================================================================= */
     let currentPricingMode = 'single';
 
@@ -1777,6 +2103,7 @@
       if (!tbody) return;
 
       tbody.innerHTML = liveMenu.map(item => {
+        const catObj = liveCategories.find(c => c.id === item.category);
         const hasVariants = item.variants && item.variants.length > 0;
 
         let priceColHtml = '';
@@ -1807,7 +2134,11 @@
               <span class="font-bold text-slate-900 block">${item.name}</span>
               <span class="text-[10px] text-slate-400">${item.bengali || ''}</span>
             </td>
-            <td class="p-2.5 uppercase text-[10px] font-bold text-slate-400">${item.category}</td>
+            <td class="p-2.5">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                ${catObj ? catObj.name : item.category}
+              </span>
+            </td>
             <td class="p-2.5">${priceColHtml}</td>
             <td class="p-2.5 text-right">
               <div class="inline-flex items-center gap-1">
@@ -1880,7 +2211,7 @@
     }
 
     /* =========================================================================
-       11. EXPENSES (SAVES TO CLOUD FIRESTORE)
+       13. EXPENSES
        ========================================================================= */
     async function handleNewExpenseSubmit(e) {
       e.preventDefault();
@@ -1971,7 +2302,7 @@
     }
 
     async function clearAllExpenses() {
-      if (confirm('Clear all today expenses from cloud?')) {
+      if (confirm('Clear all expenses from cloud?')) {
         for (const exp of expenseHistory) {
           await db.collection('craves_expenses').doc(exp.id).delete();
         }
@@ -1980,7 +2311,7 @@
     }
 
     /* =========================================================================
-       12. KITCHEN DISPLAY (KDS)
+       14. KITCHEN DISPLAY (KDS)
        ========================================================================= */
     function renderKDS() {
       const container = document.getElementById('kds-grid');
@@ -2055,7 +2386,7 @@
     }
 
     /* =========================================================================
-       13. 58MM THERMAL RECEIPT PRINT ENGINE (CENTERED STRICT 1-PAGE)
+       15. 58MM PRINT ENGINE
        ========================================================================= */
     function populateThermalReceiptDOM(order) {
       if (!order) return;
@@ -2066,6 +2397,7 @@
       document.getElementById('pr-time').innerText = order.timeStr;
       document.getElementById('pr-customer').innerText = `Cust: ${order.customer || 'Walk-in'}`;
       document.getElementById('pr-date').innerText = order.dateStr;
+      document.getElementById('pr-status').innerText = `Status: ${order.paymentStatus || 'Paid'}`;
 
       if (order.splitCash && order.splitMfs) {
         document.getElementById('pr-payment').innerText = `Pay: Cash ৳${order.splitCash} + bKash ৳${order.splitMfs}`;
@@ -2103,7 +2435,7 @@
 
       const cashRow = document.getElementById('pr-cash-calc-row');
       const changeRow = document.getElementById('pr-change-calc-row');
-      if (order.payment === 'Cash') {
+      if (order.payment === 'Cash' && order.paymentStatus !== 'Due') {
         cashRow.style.display = 'table-row';
         changeRow.style.display = 'table-row';
         document.getElementById('pr-cash-tendered').innerText = `৳${order.cashTendered}`;
@@ -2126,31 +2458,45 @@
     }
 
     /* =========================================================================
-       14. PERIOD FILTERING & SEARCH CONTROLLER
+       16. TIMELINE & DATE-RANGE FILTERING
        ========================================================================= */
     function setReportPeriod(period) {
       currentReportPeriod = period;
       
       const btnToday = document.getElementById('period-btn-today');
+      const btnRange = document.getElementById('period-btn-range');
       const btnMonth = document.getElementById('period-btn-month');
       const btnCustom = document.getElementById('period-btn-custom');
-      const customBox = document.getElementById('custom-month-container');
 
-      [btnToday, btnMonth, btnCustom].forEach(b => {
-        b.className = 'px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+      const rangeBox = document.getElementById('date-range-container');
+      const monthBox = document.getElementById('custom-month-container');
+
+      [btnToday, btnRange, btnMonth, btnCustom].forEach(b => {
+        if (b) b.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
       });
 
+      rangeBox.style.display = 'none';
+      monthBox.style.display = 'none';
+
       if (period === 'today') {
-        btnToday.className = 'px-3 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition';
-        customBox.style.display = 'none';
+        btnToday.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
+      } else if (period === 'range') {
+        btnRange.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
+        rangeBox.style.display = 'flex';
       } else if (period === 'month') {
-        btnMonth.className = 'px-3 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition';
-        customBox.style.display = 'none';
-      } else {
-        btnCustom.className = 'px-3 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition';
-        customBox.style.display = 'flex';
+        btnMonth.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
+      } else if (period === 'custom') {
+        btnCustom.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
+        monthBox.style.display = 'flex';
       }
 
+      updateReportsKPIs();
+      filterOrdersTable();
+    }
+
+    function onDateRangeChange() {
+      selectedStartDate = document.getElementById('report-date-start').value;
+      selectedEndDate = document.getElementById('report-date-end').value;
       updateReportsKPIs();
       filterOrdersTable();
     }
@@ -2166,21 +2512,30 @@
       const todayStr = now.toLocaleDateString('en-GB');
       const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      let recYearMonth = '';
+      let recYYYYMMDD = '';
+      let recYYYYMM = '';
+
       if (record.timestamp) {
         const d = new Date(record.timestamp);
-        recYearMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        recYYYYMMDD = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        recYYYYMM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       } else if (record.dateStr) {
         const parts = record.dateStr.split('/');
-        if (parts.length === 3) recYearMonth = `${parts[2]}-${parts[1]}`;
+        if (parts.length === 3) {
+          recYYYYMMDD = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+          recYYYYMM = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+        }
       }
 
       if (currentReportPeriod === 'today') {
         return record.dateStr === todayStr;
+      } else if (currentReportPeriod === 'range') {
+        if (!selectedStartDate || !selectedEndDate) return true;
+        return recYYYYMMDD >= selectedStartDate && recYYYYMMDD <= selectedEndDate;
       } else if (currentReportPeriod === 'month') {
-        return recYearMonth === currentYearMonth;
+        return recYYYYMM === currentYearMonth;
       } else if (currentReportPeriod === 'custom') {
-        return recYearMonth === selectedCustomMonth;
+        return recYYYYMM === selectedCustomMonth;
       }
       return true;
     }
@@ -2201,12 +2556,19 @@
       const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
       const netProfit = totalRev - totalExp;
 
+      const unsettledDueTotal = pOrders
+        .filter(o => o.paymentStatus === 'Due')
+        .reduce((s, o) => s + (o.total || 0), 0);
+
       const labelRev = document.getElementById('label-kpi-revenue');
       const labelExp = document.getElementById('label-kpi-expense');
 
       if (currentReportPeriod === 'today') {
         labelRev.innerText = "Today's Revenue";
         labelExp.innerText = "Today's Expenses";
+      } else if (currentReportPeriod === 'range') {
+        labelRev.innerText = `Revenue (${selectedStartDate} to ${selectedEndDate})`;
+        labelExp.innerText = `Expenses (${selectedStartDate} to ${selectedEndDate})`;
       } else if (currentReportPeriod === 'month') {
         labelRev.innerText = "This Month's Revenue";
         labelExp.innerText = "This Month's Expenses";
@@ -2219,11 +2581,11 @@
       document.getElementById('kpi-today-expense').innerText = `৳${totalExp}`;
       document.getElementById('kpi-today-profit').innerText = `৳${netProfit}`;
       document.getElementById('kpi-today-profit').className = `text-xl font-extrabold mt-1 ${netProfit >= 0 ? 'text-indigo-600' : 'text-rose-600'}`;
-      document.getElementById('kpi-today-cash').innerText = `${pOrders.length}`;
+      document.getElementById('kpi-unsettled-due').innerText = `৳${unsettledDueTotal}`;
     }
 
     /* =========================================================================
-       15. ORDER SEARCH, REMOVE ORDER & TABLE RENDERING
+       17. ORDER SEARCH & DUE ADJUSTMENTS
        ========================================================================= */
     function filterOrdersTable() {
       const query = (document.getElementById('order-search-input').value || '').toLowerCase().trim();
@@ -2234,7 +2596,8 @@
         const custMatch = (o.customer || '').toLowerCase().includes(query);
         const tableMatch = (o.table || '').toLowerCase().includes(query);
         const itemMatch = o.items ? o.items.some(i => i.name.toLowerCase().includes(query)) : false;
-        return tokenMatch || custMatch || tableMatch || itemMatch;
+        const dueMatch = query === 'due' && o.paymentStatus === 'Due';
+        return tokenMatch || custMatch || tableMatch || itemMatch || dueMatch;
       });
 
       renderFilteredOrdersTable(filtered);
@@ -2257,6 +2620,8 @@
 
       tbody.innerHTML = ordersList.map(order => {
         const itemNames = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+        const isDue = order.paymentStatus === 'Due';
+
         return `
           <tr class="hover:bg-slate-50 transition">
             <td class="p-3 font-extrabold text-slate-900">#${order.token}</td>
@@ -2264,7 +2629,16 @@
             <td class="p-3 font-semibold text-slate-700">${order.channel} • ${order.table}</td>
             <td class="p-3 text-slate-600 max-w-xs truncate" title="${itemNames}">${itemNames}</td>
             <td class="p-3">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${order.payment}</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isDue ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-slate-100 text-slate-700'}">
+                  ${order.payment} ${isDue ? '(Due)' : ''}
+                </span>
+                ${isDue ? `
+                  <button onclick="openAdjustDueModal(${order.token})" class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold border border-emerald-200 shadow-2xs">
+                    Settle Due
+                  </button>
+                ` : ''}
+              </div>
             </td>
             <td class="p-3 font-black text-rose-600">৳${order.total}</td>
             <td class="p-3 text-right">
@@ -2284,6 +2658,54 @@
 
     function renderReportsTable() {
       filterOrdersTable();
+    }
+
+    function openAdjustDueModal(token) {
+      const order = orderHistory.find(o => o.token === token);
+      if (!order) return;
+
+      adjustingOrder = order;
+      dueSettleMethod = 'Cash';
+
+      document.getElementById('due-modal-title').innerText = `Settle Due: Token #${order.token}`;
+      document.getElementById('due-modal-subtitle').innerText = `Customer: ${order.customer || 'Walk-in'} • Amount: ৳${order.total}`;
+
+      selectDueSettleMethod('Cash');
+      document.getElementById('modal-adjust-due').style.display = 'flex';
+    }
+
+    function closeAdjustDueModal() {
+      document.getElementById('modal-adjust-due').style.display = 'none';
+      adjustingOrder = null;
+    }
+
+    function selectDueSettleMethod(method) {
+      dueSettleMethod = method;
+      ['cash', 'mfs', 'card'].forEach(id => {
+        const btn = document.getElementById(`settle-btn-${id}`);
+        if (btn) btn.className = 'py-2 px-1 rounded-xl border border-slate-200 text-slate-700 flex flex-col items-center justify-center gap-1 transition';
+      });
+
+      const activeId = method === 'Cash' ? 'cash' : (method === 'bKash/Nagad' ? 'mfs' : 'card');
+      document.getElementById(`settle-btn-${activeId}`).className = 'py-2 px-1 rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-700 flex flex-col items-center justify-center gap-1 transition';
+    }
+
+    async function confirmSettleDue() {
+      if (!adjustingOrder) return;
+
+      try {
+        await db.collection('craves_orders').doc(`token_${adjustingOrder.token}`).update({
+          payment: dueSettleMethod,
+          paymentStatus: 'Paid',
+          settledAt: new Date().toISOString()
+        });
+
+        showToast(`Token #${adjustingOrder.token} due cleared via ${dueSettleMethod}!`);
+        closeAdjustDueModal();
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to adjust due payment.', 'ph-warning', true);
+      }
     }
 
     async function deleteSingleOrder(token) {
@@ -2308,8 +2730,172 @@
     }
 
     /* =========================================================================
-       16. PNG & CSV EXPORT ENGINES (FOR ACTIVE PERIOD)
+       18. HIGH-RES FULL DAY REPORT PNG GENERATOR
        ========================================================================= */
+    function downloadFullDayReportPNG() {
+      const pOrders = getPeriodFilteredOrders();
+      const pExpenses = getPeriodFilteredExpenses();
+
+      if (pOrders.length === 0 && pExpenses.length === 0) {
+        showToast('No records found for this selected timeline!', 'ph-warning', true);
+        return;
+      }
+
+      const canvas = document.getElementById('hidden-receipt-canvas');
+      const ctx = canvas.getContext('2d');
+
+      const width = 600;
+      let calculatedHeight = 360 + (pOrders.length * 28) + (pExpenses.length * 26);
+      canvas.width = width;
+      canvas.height = calculatedHeight;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, calculatedHeight);
+
+      ctx.fillStyle = '#e11d48';
+      ctx.fillRect(0, 0, width, 85);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('CRAVES • ক্রেভ্স (Mirpur 10)', 24, 38);
+
+      let timelineLabel = '';
+      if (currentReportPeriod === 'today') timelineLabel = `Daily Report • ${new Date().toLocaleDateString('en-GB')}`;
+      else if (currentReportPeriod === 'range') timelineLabel = `Report (${selectedStartDate} to ${selectedEndDate})`;
+      else if (currentReportPeriod === 'month') timelineLabel = `Month Report • Current Month`;
+      else timelineLabel = `Month Report • ${selectedCustomMonth}`;
+
+      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`${timelineLabel} | Hotline: +8801540340852`, 24, 62);
+
+      const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
+      const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+      const netProfit = totalRev - totalExp;
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+
+      // Rev Box
+      ctx.fillRect(24, 105, 165, 65);
+      ctx.strokeRect(24, 105, 165, 65);
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText("TOTAL REVENUE", 36, 126);
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 19px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`৳${totalRev}`, 36, 154);
+
+      // Exp Box
+      ctx.fillRect(217, 105, 165, 65);
+      ctx.strokeRect(217, 105, 165, 65);
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText("TOTAL EXPENSES", 229, 126);
+      ctx.fillStyle = '#e11d48';
+      ctx.font = 'bold 19px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`৳${totalExp}`, 229, 154);
+
+      // Net Box
+      ctx.fillRect(410, 105, 165, 65);
+      ctx.strokeRect(410, 105, 165, 65);
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText("NET BALANCE", 422, 126);
+      ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
+      ctx.font = 'bold 19px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`৳${netProfit}`, 422, 154);
+
+      let y = 200;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 14px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`Itemized Orders (${pOrders.length})`, 24, y);
+
+      y += 18;
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText('TOKEN  TIME     ITEMS                         PAYMENT      AMOUNT', 24, y);
+
+      y += 6;
+      ctx.beginPath();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.moveTo(24, y);
+      ctx.lineTo(width - 24, y);
+      ctx.stroke();
+
+      y += 16;
+      ctx.fillStyle = '#1e293b';
+      ctx.font = '11px monospace';
+
+      pOrders.forEach(o => {
+        let itSum = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
+        if (itSum.length > 28) itSum = itSum.substring(0, 26) + '..';
+
+        let payTag = o.paymentStatus === 'Due' ? 'DUE' : (o.payment.length > 10 ? o.payment.substring(0, 8) + '..' : o.payment);
+
+        ctx.textAlign = 'left';
+        ctx.fillText(`#${String(o.token).padEnd(5)} ${o.timeStr.padEnd(8)} ${itSum.padEnd(29)} ${payTag.padEnd(12)}`, 24, y);
+        ctx.textAlign = 'right';
+        ctx.fillText(`৳${o.total}`, width - 24, y);
+        y += 24;
+      });
+
+      y += 12;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 14px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`Itemized Expenses (${pExpenses.length})`, 24, y);
+
+      y += 18;
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText('TIME     TITLE                        CATEGORY         AMOUNT', 24, y);
+
+      y += 6;
+      ctx.beginPath();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.moveTo(24, y);
+      ctx.lineTo(width - 24, y);
+      ctx.stroke();
+
+      y += 16;
+      ctx.fillStyle = '#1e293b';
+      ctx.font = '11px monospace';
+
+      pExpenses.forEach(e => {
+        let eTitle = e.title.length > 26 ? e.title.substring(0, 24) + '..' : e.title;
+        let eCat = e.category.length > 15 ? e.category.substring(0, 13) + '..' : e.category;
+
+        ctx.textAlign = 'left';
+        ctx.fillText(`${e.timeStr.padEnd(8)} ${eTitle.padEnd(28)} ${eCat.padEnd(16)}`, 24, y);
+        ctx.textAlign = 'right';
+        ctx.fillText(`৳${e.amount}`, width - 24, y);
+        y += 22;
+      });
+
+      y += 18;
+      ctx.beginPath();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.moveTo(24, y);
+      ctx.lineTo(width - 24, y);
+      ctx.stroke();
+
+      y += 18;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#64748b';
+      ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('Generated automatically by CRAVES POS • Mirpur 10, Dhaka', width / 2, y);
+
+      const link = document.createElement('a');
+      link.download = `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      showToast('Full Report PNG Downloaded!');
+    }
+
     function downloadActiveReceiptPNG() {
       if (!latestOrder) {
         showToast('No active order to export.', 'ph-warning', true);
@@ -2434,7 +3020,7 @@
       ctx.textAlign = 'right';
       ctx.fillText(`৳${order.total}`, width - 12, y);
 
-      if (order.payment === 'Cash') {
+      if (order.payment === 'Cash' && order.paymentStatus !== 'Due') {
         y += 16;
         ctx.font = '11px Courier, monospace';
         ctx.textAlign = 'left';
@@ -2447,6 +3033,13 @@
         ctx.fillText('Change Returned:', 12, y);
         ctx.textAlign = 'right';
         ctx.fillText(`৳${order.changeReturned}`, width - 12, y);
+      } else if (order.paymentStatus === 'Due') {
+        y += 16;
+        ctx.font = 'bold 12px Courier, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('Payment Status:', 12, y);
+        ctx.textAlign = 'right';
+        ctx.fillText('UNPAID (DUE)', width - 12, y);
       }
 
       y += 10;
@@ -2479,7 +3072,7 @@
 
       let csv = '\uFEFF';
       csv += `--- CRAVES REPORT (${currentReportPeriod.toUpperCase()}) ---\n`;
-      csv += 'Token,Date,Time,Channel,Table,Customer,Items,Subtotal,Discount,Total,Payment,Tendered,Change,Status\n';
+      csv += 'Token,Date,Time,Channel,Table,Customer,Items,Subtotal,Discount,Total,Payment,PaymentStatus,Tendered,Change,Status\n';
 
       pOrders.forEach(o => {
         const itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}${i.variantName ? `(${i.variantName})` : ''}`).join('; ') : '';
@@ -2495,6 +3088,7 @@
           o.discount,
           o.total,
           `"${o.payment}"`,
+          `"${o.paymentStatus || 'Paid'}"`,
           o.cashTendered,
           o.changeReturned,
           `"${o.status}"`
@@ -2523,116 +3117,6 @@
 
       showToast('CSV Report Downloaded!');
     }
-
-    function downloadPeriodSummaryPNG() {
-      const canvas = document.getElementById('hidden-receipt-canvas');
-      const ctx = canvas.getContext('2d');
-
-      const width = 450;
-      const height = 520;
-      canvas.width = width;
-      canvas.height = height;
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, height);
-
-      ctx.fillStyle = '#e11d48';
-      ctx.fillRect(0, 0, width, 80);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'left';
-      ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('CRAVES • ক্রেভ্স (Mirpur 10)', 20, 36);
-
-      ctx.font = '12px "Plus Jakarta Sans", sans-serif';
-      let periodLabel = currentReportPeriod === 'today' ? `Daily Summary • ${new Date().toLocaleDateString('en-GB')}` : `Monthly Summary • ${currentReportPeriod === 'month' ? 'Current Month' : selectedCustomMonth}`;
-      ctx.fillText(periodLabel, 20, 58);
-
-      const pOrders = getPeriodFilteredOrders();
-      const pExpenses = getPeriodFilteredExpenses();
-
-      let totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
-      let totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
-      let netProfit = totalRev - totalExp;
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 1;
-
-      // Box 1 Revenue
-      ctx.fillRect(20, 100, 195, 75);
-      ctx.strokeRect(20, 100, 195, 75);
-      ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText("TOTAL REVENUE", 32, 122);
-      ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`৳${totalRev}`, 32, 152);
-
-      // Box 2 Expenses
-      ctx.fillRect(235, 100, 195, 75);
-      ctx.strokeRect(235, 100, 195, 75);
-      ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText("TOTAL EXPENSES", 247, 122);
-      ctx.fillStyle = '#e11d48';
-      ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`৳${totalExp}`, 247, 152);
-
-      // Box 3 Net Profit
-      ctx.fillRect(20, 190, 410, 75);
-      ctx.strokeRect(20, 190, 410, 75);
-      ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText("NET BALANCE / PROFIT", 35, 212);
-      ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
-      ctx.font = 'bold 24px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`৳${netProfit}`, 35, 245);
-
-      let y = 300;
-      ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('Summary Statistics', 20, y);
-
-      y += 24;
-      ctx.font = '12px "Plus Jakarta Sans", sans-serif';
-      ctx.fillStyle = '#475569';
-      ctx.fillText('Orders in Selected Period:', 20, y);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#0f172a';
-      ctx.fillText(`${pOrders.length}`, width - 20, y);
-
-      y += 20;
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#475569';
-      ctx.fillText('Expenses Recorded:', 20, y);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#0f172a';
-      ctx.fillText(`${pExpenses.length}`, width - 20, y);
-
-      y += 30;
-      ctx.beginPath();
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.moveTo(20, y);
-      ctx.lineTo(width - 20, y);
-      ctx.stroke();
-
-      y += 28;
-      ctx.textAlign = 'left';
-      ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('Restaurant Hotline: +8801540340852', 20, y);
-      y += 18;
-      ctx.font = '11px "Plus Jakarta Sans", sans-serif';
-      ctx.fillStyle = '#64748b';
-      ctx.fillText('Address: House 8, Road 4, Block C, Mirpur 10, Dhaka', 20, y);
-
-      const link = document.createElement('a');
-      link.download = `CRAVES_Summary_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-
-      showToast('Summary PNG Downloaded!');
-    }
   </script>
 </body>
-</html>
+                </html>

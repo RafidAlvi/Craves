@@ -2516,6 +2516,30 @@
       window.print();
     }
 
+function trigger58mmThermalPrint(specificToken = null) {
+  const order = specificToken ? orderHistory.find(o => o.token === specificToken) : latestOrder;
+  if (!order) {
+    showToast('No active order to print!', 'ph-warning', true);
+    return;
+  }
+
+  // Populate the receipt DOM elements with order figures
+  populateThermalReceiptDOM(order);
+
+  // Extract the inner HTML of the receipt box
+  const receiptContainer = document.getElementById('print-thermal-receipt');
+  const slipHtml = receiptContainer ? receiptContainer.innerHTML : '';
+
+  // If inside the APK, hand the exact HTML string to the Android PrintManager
+  if (window.AndroidDownloader && typeof window.AndroidDownloader.printSlip === 'function') {
+    window.AndroidDownloader.printSlip(slipHtml);
+  } else {
+    // If in standard desktop or mobile Google Chrome, use browser printing
+    window.print();
+  }
+}
+
+    
     /* =========================================================================
        16. TIMELINE & DATE-RANGE FILTERING
        ========================================================================= */

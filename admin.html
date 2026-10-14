@@ -5,18 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>CRAVES • ক্রেভ্স | Online POS & Management System</title>
   
-  <!-- Admin Authentication Check -->
+  <!-- Admin Authentication Check (Persistent Device Storage) 
   <script>
-    if (sessionStorage.getItem('craves_admin_auth') !== 'true') {
+    if (localStorage.getItem('craves_admin_auth') !== 'true') {
         const passwordPrompt = prompt("Restricted Area: Enter Admin Password");
         if (passwordPrompt === "craves233") {
-            sessionStorage.setItem('craves_admin_auth', 'true');
+            localStorage.setItem('craves_admin_auth', 'true');
         } else {
             alert("Incorrect password. Access denied.");
             window.location.href = "index.html";
         }
     }
   </script>
+-->
+    <!-- Admin Authentication Check (Session or Persistent Remember) -->
+<script>
+  const isRemembered = localStorage.getItem('craves_admin_remember') === 'true' && localStorage.getItem('craves_admin_auth') === 'true';
+  const isSessionAuth = sessionStorage.getItem('craves_admin_auth') === 'true';
+
+  if (!isRemembered && !isSessionAuth) {
+      const passwordPrompt = prompt("Restricted Area: Enter Admin Password");
+      if (passwordPrompt === "craves233") {
+          sessionStorage.setItem('craves_admin_auth', 'true');
+      } else {
+          alert("Incorrect password. Access denied.");
+          window.location.href = "index.html";
+      }
+  }
+</script>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -148,6 +164,12 @@
           <i class="ph ph-image text-base text-indigo-600"></i>
           <span class="hidden md:inline">Report PNG</span>
         </button>
+          <button onclick="adminLogout()" title="Log out" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+  <i class="ph ph-sign-out text-base"></i>
+  <span class="hidden md:inline">Logout</span>
+</button>
+
+          
       </div>
     </div>
 
@@ -984,6 +1006,82 @@
     </div>
   </div>
 
+  <!-- ================= POPUP 4: ORDER & CUSTOMER DETAILS MODAL (SALES VIEW) ================= -->
+  <div id="modal-order-details" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3" style="display: none;">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-5 border border-slate-200 shadow-2xl space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-base font-extrabold">
+            <i class="ph ph-receipt"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900" id="det-order-title">Order #101</h3>
+            <span class="text-[11px] text-slate-400" id="det-order-date">Date & Time</span>
+          </div>
+        </div>
+        <button onclick="closeOrderDetailsModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+          <i class="ph ph-x text-base"></i>
+        </button>
+      </div>
+
+      <!-- Customer & Channel Details -->
+      <div class="bg-slate-50 p-2.5 rounded-xl text-xs grid grid-cols-2 gap-2 border border-slate-200">
+        <div>
+          <span class="text-[10px] uppercase font-bold text-slate-400 block">Customer Name / Phone</span>
+          <span id="det-order-customer" class="font-extrabold text-slate-800">Walk-in</span>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase font-bold text-slate-400 block">Channel & Table</span>
+          <span id="det-order-channel" class="font-extrabold text-slate-800">Dine-In • Table 1</span>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase font-bold text-slate-400 block">Payment Method</span>
+          <span id="det-order-payment" class="font-bold text-slate-800">Cash (Paid)</span>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase font-bold text-slate-400 block">Kitchen Status</span>
+          <span id="det-order-status" class="font-bold text-slate-800">Served</span>
+        </div>
+      </div>
+
+      <!-- Items List -->
+      <div>
+        <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Ordered Items</span>
+        <div id="det-order-items-list" class="max-h-48 overflow-y-auto space-y-1.5 text-xs border border-slate-200 rounded-xl p-2.5 bg-white divide-y divide-slate-100"></div>
+      </div>
+
+      <!-- Financial Breakdown -->
+      <div class="pt-2 border-t border-slate-100 space-y-1 text-xs">
+        <div class="flex justify-between text-slate-500">
+          <span>Subtotal:</span>
+          <span id="det-order-subtotal" class="font-bold text-slate-800">৳0</span>
+        </div>
+        <div class="flex justify-between text-slate-500" id="det-order-discount-row">
+          <span>Discount:</span>
+          <span id="det-order-discount" class="font-bold text-rose-600">-৳0</span>
+        </div>
+        <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-1 border-t border-slate-200">
+          <span>Total Amount:</span>
+          <span id="det-order-total" class="text-rose-600 font-black">৳0</span>
+        </div>
+        <div class="flex justify-between text-[11px] text-slate-500" id="det-order-cash-row">
+          <span>Cash Tendered / Change:</span>
+          <span id="det-order-cash-info" class="font-semibold text-slate-700">৳0 / ৳0</span>
+        </div>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+        <button onclick="trigger58mmThermalPrint(selectedDetailOrderToken)" class="px-3.5 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+          <i class="ph ph-printer text-amber-400"></i> Print Slip
+        </button>
+        <button onclick="closeOrderDetailsModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= ISOLATED 58MM PRINT DOM ================= -->
   <div id="print-thermal-receipt" aria-hidden="true">
     <div class="receipt-box font-mono-receipt">
@@ -1084,6 +1182,20 @@
       console.warn('Firestore persistence notice:', err.code);
     });
 
+    
+    
+    function adminLogout() {
+  if (confirm("Are you sure you want to log out?")) {
+      localStorage.removeItem('craves_admin_auth');
+      localStorage.removeItem('craves_admin_remember');
+      sessionStorage.removeItem('craves_admin_auth');
+      window.location.href = "index.html";
+  }
+}
+
+    
+    
+    
     /* =========================================================================
        2. DEFAULT CRAVES CATEGORIES (CUSTOMIZABLE WITH ICONS & COLORS)
        ========================================================================= */
@@ -1176,6 +1288,9 @@
     let adjustingOrder = null;
     let dueSettleMethod = 'Cash';
 
+    // Order Details State
+    let selectedDetailOrderToken = null;
+
     /* =========================================================================
        4. INITIALIZATION & HISTORY NAVIGATION (BACKPRESS LOGIC)
        ========================================================================= */
@@ -1185,6 +1300,7 @@
         document.getElementById('modal-order-confirm'),
         document.getElementById('modal-order-success'),
         document.getElementById('modal-adjust-due'),
+        document.getElementById('modal-order-details'),
         document.getElementById('mobile-cart-drawer')
       ];
       return modals.some(m => m && m.style.display !== 'none' && m.style.display !== '');
@@ -1195,21 +1311,24 @@
       const confirmModal = document.getElementById('modal-order-confirm');
       const successModal = document.getElementById('modal-order-success');
       const dueModal = document.getElementById('modal-adjust-due');
+      const detailsModal = document.getElementById('modal-order-details');
       const mobileDrawer = document.getElementById('mobile-cart-drawer');
 
       if (configModal) configModal.style.display = 'none';
       if (confirmModal) confirmModal.style.display = 'none';
       if (successModal) successModal.style.display = 'none';
       if (dueModal) dueModal.style.display = 'none';
+      if (detailsModal) detailsModal.style.display = 'none';
       if (mobileDrawer) mobileDrawer.style.display = 'none';
 
       configuredItem = null;
       configuredVariant = null;
       configuredAddons = [];
       adjustingOrder = null;
+      selectedDetailOrderToken = null;
     }
 
-    // Set initial history state trap
+    // Set initial history state trap for back navigation
     history.pushState({ page: 'admin' }, '');
 
     window.addEventListener('popstate', function(event) {
@@ -2445,7 +2564,7 @@
     }
 
     /* =========================================================================
-       15. 58MM PRINT ENGINE
+       15. 58MM PRINT ENGINE (BROWSER & ANDROID WEBVIEW ADAPTER)
        ========================================================================= */
     function populateThermalReceiptDOM(order) {
       if (!order) return;
@@ -2505,18 +2624,8 @@
       }
     }
 
+    
     function trigger58mmThermalPrint(specificToken = null) {
-      const order = specificToken ? orderHistory.find(o => o.token === specificToken) : latestOrder;
-      if (!order) {
-        showToast('No active order to print!', 'ph-warning', true);
-        return;
-      }
-
-      populateThermalReceiptDOM(order);
-      window.print();
-    }
-
-function trigger58mmThermalPrint(specificToken = null) {
   const order = specificToken ? orderHistory.find(o => o.token === specificToken) : latestOrder;
   if (!order) {
     showToast('No active order to print!', 'ph-warning', true);
@@ -2539,7 +2648,7 @@ function trigger58mmThermalPrint(specificToken = null) {
   }
 }
 
-    
+
     /* =========================================================================
        16. TIMELINE & DATE-RANGE FILTERING
        ========================================================================= */
@@ -2668,7 +2777,7 @@ function trigger58mmThermalPrint(specificToken = null) {
     }
 
     /* =========================================================================
-       17. ORDER SEARCH & DUE ADJUSTMENTS
+       17. ORDER SEARCH, DUE ADJUSTMENTS & DETAILED VIEW
        ========================================================================= */
     function filterOrdersTable() {
       const query = (document.getElementById('order-search-input').value || '').toLowerCase().trim();
@@ -2706,30 +2815,42 @@ function trigger58mmThermalPrint(specificToken = null) {
         const isDue = order.paymentStatus === 'Due';
 
         return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="p-3 font-extrabold text-slate-900">#${order.token}</td>
-            <td class="p-3 text-slate-500 font-medium">${order.dateStr} <span class="text-slate-400 text-[10px]">${order.timeStr}</span></td>
-            <td class="p-3 font-semibold text-slate-700">${order.channel} • ${order.table}</td>
-            <td class="p-3 text-slate-600 max-w-xs truncate" title="${itemNames}">${itemNames}</td>
+          <tr class="hover:bg-slate-50 transition cursor-pointer">
+            <td class="p-3 font-extrabold text-slate-900" onclick="viewOrderDetails(${order.token})">
+              <span class="hover:text-rose-600 underline decoration-dotted">#${order.token}</span>
+            </td>
+            <td class="p-3 text-slate-500 font-medium" onclick="viewOrderDetails(${order.token})">
+              ${order.dateStr} <span class="text-slate-400 text-[10px]">${order.timeStr}</span>
+            </td>
+            <td class="p-3 font-semibold text-slate-700" onclick="viewOrderDetails(${order.token})">
+              ${order.channel} • ${order.table}
+              <div class="text-[10px] text-slate-400 font-normal">Cust: ${order.customer || 'Walk-in'}</div>
+            </td>
+            <td class="p-3 text-slate-600 max-w-xs truncate" title="${itemNames}" onclick="viewOrderDetails(${order.token})">
+              ${itemNames}
+            </td>
             <td class="p-3">
               <div class="flex items-center gap-1.5">
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isDue ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-slate-100 text-slate-700'}">
                   ${order.payment} ${isDue ? '(Due)' : ''}
                 </span>
                 ${isDue ? `
-                  <button onclick="openAdjustDueModal(${order.token})" class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold border border-emerald-200 shadow-2xs">
+                  <button onclick="event.stopPropagation(); openAdjustDueModal(${order.token})" class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold border border-emerald-200 shadow-2xs">
                     Settle Due
                   </button>
                 ` : ''}
               </div>
             </td>
-            <td class="p-3 font-black text-rose-600">৳${order.total}</td>
+            <td class="p-3 font-black text-rose-600" onclick="viewOrderDetails(${order.token})">৳${order.total}</td>
             <td class="p-3 text-right">
               <div class="inline-flex items-center gap-1.5">
-                <button onclick="trigger58mmThermalPrint(${order.token})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold" title="Reprint 58mm slip">
+                <button onclick="event.stopPropagation(); viewOrderDetails(${order.token})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-semibold" title="View customer & order details">
+                  <i class="ph ph-eye"></i>
+                </button>
+                <button onclick="event.stopPropagation(); trigger58mmThermalPrint(${order.token})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold" title="Reprint 58mm slip">
                   <i class="ph ph-printer"></i> Slip
                 </button>
-                <button onclick="deleteSingleOrder(${order.token})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-semibold" title="Remove sold item/order">
+                <button onclick="event.stopPropagation(); deleteSingleOrder(${order.token})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-semibold" title="Remove sold item/order">
                   <i class="ph ph-trash text-sm"></i>
                 </button>
               </div>
@@ -2741,6 +2862,58 @@ function trigger58mmThermalPrint(specificToken = null) {
 
     function renderReportsTable() {
       filterOrdersTable();
+    }
+
+    /* ORDER DETAILS MODAL DISPLAY */
+    function viewOrderDetails(token) {
+      const order = orderHistory.find(o => o.token === token);
+      if (!order) return;
+
+      selectedDetailOrderToken = token;
+
+      document.getElementById('det-order-title').innerText = `Order Token #${order.token}`;
+      document.getElementById('det-order-date').innerText = `${order.dateStr} at ${order.timeStr}`;
+      document.getElementById('det-order-customer').innerText = order.customer || 'Walk-in';
+      document.getElementById('det-order-channel').innerText = `${order.channel} • ${order.table}`;
+      document.getElementById('det-order-payment').innerText = `${order.payment} (${order.paymentStatus || 'Paid'})`;
+      document.getElementById('det-order-status').innerText = order.status || 'Completed';
+
+      document.getElementById('det-order-items-list').innerHTML = (order.items || []).map(item => `
+        <div class="py-1 flex justify-between items-center text-xs">
+          <div>
+            <span class="font-extrabold text-slate-900">${item.qty}x</span>
+            <span class="font-bold text-slate-800">${item.name}</span>
+            ${item.variantName ? `<span class="text-slate-400 text-[10px]">(${item.variantName})</span>` : ''}
+            ${item.addons && item.addons.length ? `<div class="text-[10px] text-rose-500 font-semibold">+ ${item.addons.map(a => a.name).join(', ')}</div>` : ''}
+          </div>
+          <span class="font-bold text-slate-800">৳${item.unitPrice * item.qty}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('det-order-subtotal').innerText = `৳${order.subtotal || order.total}`;
+      
+      if (order.discount > 0) {
+        document.getElementById('det-order-discount-row').style.display = 'flex';
+        document.getElementById('det-order-discount').innerText = `-৳${order.discount}`;
+      } else {
+        document.getElementById('det-order-discount-row').style.display = 'none';
+      }
+
+      document.getElementById('det-order-total').innerText = `৳${order.total}`;
+
+      if (order.cashTendered) {
+        document.getElementById('det-order-cash-row').style.display = 'flex';
+        document.getElementById('det-order-cash-info').innerText = `Tendered: ৳${order.cashTendered} | Returned: ৳${order.changeReturned || 0}`;
+      } else {
+        document.getElementById('det-order-cash-row').style.display = 'none';
+      }
+
+      document.getElementById('modal-order-details').style.display = 'flex';
+    }
+
+    function closeOrderDetailsModal() {
+      document.getElementById('modal-order-details').style.display = 'none';
+      selectedDetailOrderToken = null;
     }
 
     function openAdjustDueModal(token) {

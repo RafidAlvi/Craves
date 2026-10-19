@@ -5,20 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>CRAVES • ক্রেভ্স | Online POS & Management System</title>
   
-  <!-- Admin Authentication Check (Persistent Device Storage) 
-  <script>
-    if (localStorage.getItem('craves_admin_auth') !== 'true') {
-        const passwordPrompt = prompt("Restricted Area: Enter Admin Password");
-        if (passwordPrompt === "craves233") {
-            localStorage.setItem('craves_admin_auth', 'true');
-        } else {
-            alert("Incorrect password. Access denied.");
-            window.location.href = "index.html";
-        }
-    }
-  </script>
--->
-    <!-- Admin Authentication Check (Session or Persistent Remember) -->
+  <!-- Admin Authentication Check (Session or Persistent Remember) -->
 <script>
   const isRemembered = localStorage.getItem('craves_admin_remember') === 'true' && localStorage.getItem('craves_admin_auth') === 'true';
   const isSessionAuth = sessionStorage.getItem('craves_admin_auth') === 'true';
@@ -164,12 +151,10 @@
           <i class="ph ph-image text-base text-indigo-600"></i>
           <span class="hidden md:inline">Report PNG</span>
         </button>
-          <button onclick="adminLogout()" title="Log out" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
-  <i class="ph ph-sign-out text-base"></i>
-  <span class="hidden md:inline">Logout</span>
-</button>
-
-          
+        <button onclick="adminLogout()" title="Log out" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+          <i class="ph ph-sign-out text-base"></i>
+          <span class="hidden md:inline">Logout</span>
+        </button>
       </div>
     </div>
 
@@ -286,12 +271,10 @@
               <span>Subtotal</span>
               <span id="cart-subtotal" class="font-bold text-slate-700">৳0</span>
             </div>
-            <div class="flex justify-between items-center text-slate-500">
-              <span class="flex items-center gap-1">
-                Discount (৳)
-                <button onclick="promptManualDiscount()" class="text-rose-600 text-[11px] underline">edit</button>
-              </span>
-              <span id="cart-discount" class="font-bold text-slate-700">৳0</span>
+            <!-- DISCOUNT INPUT (AMOUNT) -->
+            <div class="flex justify-between items-center text-slate-500 gap-2">
+              <span class="text-xs font-semibold text-slate-600">Discount (৳)</span>
+              <input type="number" id="cart-discount-input" oninput="onManualDiscountInput(this.value)" min="0" placeholder="0" class="w-24 text-right px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-rose-600 focus:outline-hidden focus:border-rose-500" />
             </div>
             <div class="flex justify-between text-base font-extrabold text-slate-900 pt-1 border-t border-slate-200">
               <span>Total Payable</span>
@@ -755,6 +738,11 @@
           <span>Subtotal</span>
           <span id="m-cart-subtotal" class="font-bold text-slate-800">৳0</span>
         </div>
+        <!-- MOBILE DISCOUNT INPUT (AMOUNT) -->
+        <div class="flex justify-between items-center text-xs text-slate-500 gap-2">
+          <span class="font-semibold">Discount (৳)</span>
+          <input type="number" id="m-cart-discount-input" oninput="onManualDiscountInput(this.value)" min="0" placeholder="0" class="w-24 text-right px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-rose-600 focus:outline-hidden focus:border-rose-500" />
+        </div>
         <div class="flex justify-between text-sm font-black text-slate-900">
           <span>Total Payable</span>
           <span id="m-cart-total-payable" class="text-rose-600">৳0</span>
@@ -1182,20 +1170,15 @@
       console.warn('Firestore persistence notice:', err.code);
     });
 
-    
-    
     function adminLogout() {
-  if (confirm("Are you sure you want to log out?")) {
-      localStorage.removeItem('craves_admin_auth');
-      localStorage.removeItem('craves_admin_remember');
-      sessionStorage.removeItem('craves_admin_auth');
-      window.location.href = "index.html";
-  }
-}
+      if (confirm("Are you sure you want to log out?")) {
+          localStorage.removeItem('craves_admin_auth');
+          localStorage.removeItem('craves_admin_remember');
+          sessionStorage.removeItem('craves_admin_auth');
+          window.location.href = "index.html";
+      }
+    }
 
-    
-    
-    
     /* =========================================================================
        2. DEFAULT CRAVES CATEGORIES (CUSTOMIZABLE WITH ICONS & COLORS)
        ========================================================================= */
@@ -1280,8 +1263,8 @@
 
     // Report Period State (today, range, month, custom)
     let currentReportPeriod = 'today';
-    let selectedStartDate = ''; // 'YYYY-MM-DD'
-    let selectedEndDate = '';   // 'YYYY-MM-DD'
+    let selectedStartDate = ''; 
+    let selectedEndDate = '';   
     let selectedCustomMonth = '';
 
     // Due Adjustment State
@@ -1328,30 +1311,25 @@
       selectedDetailOrderToken = null;
     }
 
-    // Set initial history state trap for back navigation
     history.pushState({ page: 'admin' }, '');
 
     window.addEventListener('popstate', function(event) {
-      // 1. If any modal or cart drawer is open, close it and stay in the panel
       if (isAnyModalOpen()) {
         closeAllModals();
         history.pushState({ page: 'admin' }, '');
         return;
       }
 
-      // 2. If user is in another tab (KDS, Menu, Expense, Reports), return to POS
       if (currentTab !== 'pos') {
         switchTab('pos');
         history.pushState({ page: 'admin' }, '');
         return;
       }
 
-      // 3. If in POS section with no modals open, show exit confirmation prompt
       const confirmExit = confirm("Are you sure you want to exit the admin panel and return to the main page?");
       if (confirmExit) {
         window.location.href = "index.html";
       } else {
-        // Keep user inside admin panel
         history.pushState({ page: 'admin' }, '');
       }
     });
@@ -1840,6 +1818,18 @@
       renderCart();
     }
 
+    function onManualDiscountInput(val) {
+      const parsed = parseFloat(val) || 0;
+      manualDiscount = parsed < 0 ? 0 : parsed;
+      
+      const dInput = document.getElementById('cart-discount-input');
+      const mInput = document.getElementById('m-cart-discount-input');
+      if (dInput && document.activeElement !== dInput) dInput.value = manualDiscount || '';
+      if (mInput && document.activeElement !== mInput) mInput.value = manualDiscount || '';
+      
+      renderCart();
+    }
+
     function promptManualDiscount() {
       const val = prompt('Enter discount amount in BDT (৳):', manualDiscount);
       if (val !== null) {
@@ -1871,7 +1861,7 @@
         containerMobile.innerHTML = emptyHtml;
         subtotalEl.innerText = '৳0';
         totalEl.innerText = '৳0';
-        discountEl.innerText = '৳0';
+        if (discountEl) discountEl.innerText = '৳0';
         mobileCountEl.innerText = '0';
         mobileTotalEl.innerText = '৳0';
         mSubtotalEl.innerText = '৳0';
@@ -1918,7 +1908,7 @@
       const finalPayable = Math.max(0, subtotal - manualDiscount);
 
       subtotalEl.innerText = `৳${subtotal}`;
-      discountEl.innerText = `৳${manualDiscount}`;
+      if (discountEl) discountEl.innerText = `৳${manualDiscount}`;
       totalEl.innerText = `৳${finalPayable}`;
       mobileCountEl.innerText = totalQty.toString();
       mobileTotalEl.innerText = `৳${finalPayable}`;
@@ -2115,6 +2105,12 @@
       toggleMobileCartDrawer(false);
       cart = [];
       manualDiscount = 0;
+      
+      const dInput = document.getElementById('cart-discount-input');
+      const mInput = document.getElementById('m-cart-discount-input');
+      if (dInput) dInput.value = '';
+      if (mInput) mInput.value = '';
+
       renderCart();
 
       document.getElementById('success-token-title').innerText = `TOKEN #${assignedToken}`;
@@ -2624,30 +2620,24 @@
       }
     }
 
-    
     function trigger58mmThermalPrint(specificToken = null) {
-  const order = specificToken ? orderHistory.find(o => o.token === specificToken) : latestOrder;
-  if (!order) {
-    showToast('No active order to print!', 'ph-warning', true);
-    return;
-  }
+      const order = specificToken ? orderHistory.find(o => o.token === specificToken) : latestOrder;
+      if (!order) {
+        showToast('No active order to print!', 'ph-warning', true);
+        return;
+      }
 
-  // Populate the receipt DOM elements with order figures
-  populateThermalReceiptDOM(order);
+      populateThermalReceiptDOM(order);
 
-  // Extract the inner HTML of the receipt box
-  const receiptContainer = document.getElementById('print-thermal-receipt');
-  const slipHtml = receiptContainer ? receiptContainer.innerHTML : '';
+      const receiptContainer = document.getElementById('print-thermal-receipt');
+      const slipHtml = receiptContainer ? receiptContainer.innerHTML : '';
 
-  // If inside the APK, hand the exact HTML string to the Android PrintManager
-  if (window.AndroidDownloader && typeof window.AndroidDownloader.printSlip === 'function') {
-    window.AndroidDownloader.printSlip(slipHtml);
-  } else {
-    // If in standard desktop or mobile Google Chrome, use browser printing
-    window.print();
-  }
-}
-
+      if (window.AndroidDownloader && typeof window.AndroidDownloader.printSlip === 'function') {
+        window.AndroidDownloader.printSlip(slipHtml);
+      } else {
+        window.print();
+      }
+    }
 
     /* =========================================================================
        16. TIMELINE & DATE-RANGE FILTERING
@@ -2864,7 +2854,6 @@
       filterOrdersTable();
     }
 
-    /* ORDER DETAILS MODAL DISPLAY */
     function viewOrderDetails(token) {
       const order = orderHistory.find(o => o.token === token);
       if (!order) return;

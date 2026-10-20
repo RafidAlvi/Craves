@@ -2977,170 +2977,181 @@
     /* =========================================================================
        18. HIGH-RES FULL DAY REPORT PNG GENERATOR
        ========================================================================= */
-    function downloadFullDayReportPNG() {
-      const pOrders = getPeriodFilteredOrders();
-      const pExpenses = getPeriodFilteredExpenses();
+function downloadFullDayReportPNG() {
+  const pOrders = getPeriodFilteredOrders();
+  const pExpenses = getPeriodFilteredExpenses();
 
-      if (pOrders.length === 0 && pExpenses.length === 0) {
-        showToast('No records found for this selected timeline!', 'ph-warning', true);
-        return;
-      }
+  if (pOrders.length === 0 && pExpenses.length === 0) {
+    showToast('No records found for this selected timeline!', 'ph-warning', true);
+    return;
+  }
 
-      const canvas = document.getElementById('hidden-receipt-canvas');
-      const ctx = canvas.getContext('2d');
+  const canvas = document.getElementById('hidden-receipt-canvas');
+  const ctx = canvas.getContext('2d');
 
-      const width = 600;
-      let calculatedHeight = 360 + (pOrders.length * 28) + (pExpenses.length * 26);
-      canvas.width = width;
-      canvas.height = calculatedHeight;
+  const width = 640;
+  
+  // Calculate a dynamic, safe height based on actual item counts to prevent clipping
+  let calculatedHeight = 240 + (pOrders.length * 52) + (pExpenses.length * 40) + 120;
+  canvas.width = width;
+  canvas.height = calculatedHeight;
 
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, calculatedHeight);
+  // Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, calculatedHeight);
 
-      ctx.fillStyle = '#e11d48';
-      ctx.fillRect(0, 0, width, 85);
+  // Header Banner
+  ctx.fillStyle = '#e11d48';
+  ctx.fillRect(0, 0, width, 90);
 
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'left';
-      ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('CRAVES • ক্রেভ্স (Mirpur 10)', 24, 38);
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('CRAVES • ক্রেভ্স (Mirpur 10)', 24, 38);
 
-      let timelineLabel = '';
-      if (currentReportPeriod === 'today') timelineLabel = `Daily Report • ${new Date().toLocaleDateString('en-GB')}`;
-      else if (currentReportPeriod === 'range') timelineLabel = `Report (${selectedStartDate} to ${selectedEndDate})`;
-      else if (currentReportPeriod === 'month') timelineLabel = `Month Report • Current Month`;
-      else timelineLabel = `Month Report • ${selectedCustomMonth}`;
+  let timelineLabel = '';
+  if (currentReportPeriod === 'today') timelineLabel = `Daily Report • ${new Date().toLocaleDateString('en-GB')}`;
+  else if (currentReportPeriod === 'range') timelineLabel = `Report (${selectedStartDate} to ${selectedEndDate})`;
+  else if (currentReportPeriod === 'month') timelineLabel = `Month Report • Current Month`;
+  else timelineLabel = `Month Report • ${selectedCustomMonth}`;
 
-      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`${timelineLabel} | Hotline: +8801540340852`, 24, 62);
+  ctx.font = '12px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`${timelineLabel} | Hotline: +8801540340852`, 24, 64);
 
-      const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
-      const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
-      const netProfit = totalRev - totalExp;
+  // KPI Summary Boxes
+  const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+  const netProfit = totalRev - totalExp;
 
-      ctx.fillStyle = '#f8fafc';
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.lineWidth = 1;
+  const boxWidth = 184;
+  const boxHeight = 65;
+  const boxY = 110;
 
-      // Rev Box
-      ctx.fillRect(24, 105, 165, 65);
-      ctx.strokeRect(24, 105, 165, 65);
-      ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText("TOTAL REVENUE", 36, 126);
-      ctx.fillStyle = '#10b981';
-      ctx.font = 'bold 19px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`৳${totalRev}`, 36, 154);
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
 
-      // Exp Box
-      ctx.fillRect(217, 105, 165, 65);
-      ctx.strokeRect(217, 105, 165, 65);
-      ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText("TOTAL EXPENSES", 229, 126);
-      ctx.fillStyle = '#e11d48';
-      ctx.font = 'bold 19px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`৳${totalExp}`, 229, 154);
+  // Revenue Box
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(24, boxY, boxWidth, boxHeight);
+  ctx.strokeRect(24, boxY, boxWidth, boxHeight);
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText("TOTAL REVENUE", 36, boxY + 22);
+  ctx.fillStyle = '#10b981';
+  ctx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`৳${totalRev}`, 36, boxY + 48);
 
-      // Net Box
-      ctx.fillRect(410, 105, 165, 65);
-      ctx.strokeRect(410, 105, 165, 65);
-      ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText("NET BALANCE", 422, 126);
-      ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
-      ctx.font = 'bold 19px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`৳${netProfit}`, 422, 154);
+  // Expenses Box
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(228, boxY, boxWidth, boxHeight);
+  ctx.strokeRect(228, boxY, boxWidth, boxHeight);
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText("TOTAL EXPENSES", 240, boxY + 22);
+  ctx.fillStyle = '#e11d48';
+  ctx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`৳${totalExp}`, 240, boxY + 48);
 
-      let y = 200;
+  // Net Profit Box
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(432, boxY, boxWidth, boxHeight);
+  ctx.strokeRect(432, boxY, boxWidth, boxHeight);
+  ctx.fillStyle = '#64748b';
+  ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText("NET BALANCE", 444, boxY + 22);
+  ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
+  ctx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`৳${netProfit}`, 444, boxY + 48);
 
-      ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 14px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`Itemized Orders (${pOrders.length})`, 24, y);
+  let currentY = 205;
 
-      y += 18;
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 11px monospace';
-      ctx.fillText('TOKEN  TIME     ITEMS                         PAYMENT      AMOUNT', 24, y);
+  // --- ORDERS SECTION ---
+  ctx.fillStyle = '#0f172a';
+  ctx.font = 'bold 14px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`Itemized Orders (${pOrders.length})`, 24, currentY);
+  currentY += 15;
 
-      y += 6;
-      ctx.beginPath();
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.moveTo(24, y);
-      ctx.lineTo(width - 24, y);
-      ctx.stroke();
+  pOrders.forEach((o, index) => {
+    currentY += 36;
+    ctx.fillStyle = index % 2 === 0 ? '#f8fafc' : '#ffffff';
+    ctx.fillRect(24, currentY - 24, width - 48, 38);
+    ctx.strokeStyle = '#f1f5f9';
+    ctx.strokeRect(24, currentY - 24, width - 48, 38);
 
-      y += 16;
-      ctx.fillStyle = '#1e293b';
-      ctx.font = '11px monospace';
+    // Token & Time
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(`#${o.token}`, 36, currentY - 2);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(`${o.timeStr} (${o.channel})`, 85, currentY - 2);
 
-      pOrders.forEach(o => {
-        let itSum = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
-        if (itSum.length > 28) itSum = itSum.substring(0, 26) + '..';
+    // Items summary string
+    let itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
+    if (itemSummary.length > 42) itemSummary = itemSummary.substring(0, 40) + '...';
+    ctx.fillStyle = '#334155';
+    ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(itemSummary, 210, currentY - 2);
 
-        let payTag = o.paymentStatus === 'Due' ? 'DUE' : (o.payment.length > 10 ? o.payment.substring(0, 8) + '..' : o.payment);
+    // Total Amount
+    ctx.fillStyle = '#e11d48';
+    ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(`৳${o.total}`, width - 36, currentY - 2);
+    ctx.textAlign = 'left';
+  });
 
-        ctx.textAlign = 'left';
-        ctx.fillText(`#${String(o.token).padEnd(5)} ${o.timeStr.padEnd(8)} ${itSum.padEnd(29)} ${payTag.padEnd(12)}`, 24, y);
-        ctx.textAlign = 'right';
-        ctx.fillText(`৳${o.total}`, width - 24, y);
-        y += 24;
-      });
+  currentY += 30;
 
-      y += 12;
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 14px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`Itemized Expenses (${pExpenses.length})`, 24, y);
+  // --- EXPENSES SECTION ---
+  if (pExpenses.length > 0) {
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 14px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(`Itemized Expenses (${pExpenses.length})`, 24, currentY);
+    currentY += 15;
 
-      y += 18;
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = 'bold 11px monospace';
-      ctx.fillText('TIME     TITLE                        CATEGORY         AMOUNT', 24, y);
+    pExpenses.forEach((e, index) => {
+      currentY += 32;
+      ctx.fillStyle = index % 2 === 0 ? '#f8fafc' : '#ffffff';
+      ctx.fillRect(24, currentY - 22, width - 48, 32);
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.strokeRect(24, currentY - 22, width - 48, 32);
 
-      y += 6;
-      ctx.beginPath();
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.moveTo(24, y);
-      ctx.lineTo(width - 24, y);
-      ctx.stroke();
-
-      y += 16;
-      ctx.fillStyle = '#1e293b';
-      ctx.font = '11px monospace';
-
-      pExpenses.forEach(e => {
-        let eTitle = e.title.length > 26 ? e.title.substring(0, 24) + '..' : e.title;
-        let eCat = e.category.length > 15 ? e.category.substring(0, 13) + '..' : e.category;
-
-        ctx.textAlign = 'left';
-        ctx.fillText(`${e.timeStr.padEnd(8)} ${eTitle.padEnd(28)} ${eCat.padEnd(16)}`, 24, y);
-        ctx.textAlign = 'right';
-        ctx.fillText(`৳${e.amount}`, width - 24, y);
-        y += 22;
-      });
-
-      y += 18;
-      ctx.beginPath();
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.moveTo(24, y);
-      ctx.lineTo(width - 24, y);
-      ctx.stroke();
-
-      y += 18;
-      ctx.textAlign = 'center';
       ctx.fillStyle = '#64748b';
       ctx.font = '11px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('Generated automatically by CRAVES POS • Mirpur 10, Dhaka', width / 2, y);
+      ctx.fillText(e.timeStr, 36, currentY - 2);
 
-      const link = document.createElement('a');
-      link.download = `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(e.title, 110, currentY - 2);
 
-      showToast('Full Report PNG Downloaded!');
-    }
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`[${e.category}]`, 340, currentY - 2);
 
+      ctx.fillStyle = '#e11d48';
+      ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`৳${e.amount}`, width - 36, currentY - 2);
+      ctx.textAlign = 'left';
+    });
+  }
+
+  // Footer
+  currentY += 45;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Generated automatically by CRAVES POS • Mirpur 10, Dhaka', width / 2, currentY);
+
+  // Trigger Download
+  const link = document.createElement('a');
+  link.download = `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+
+  showToast('Full Report PNG Downloaded!');
+}
     function downloadActiveReceiptPNG() {
       if (!latestOrder) {
         showToast('No active order to export.', 'ph-warning', true);

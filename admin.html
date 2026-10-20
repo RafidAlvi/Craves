@@ -2975,281 +2975,281 @@
     }
 
     /* =========================================================================
-       18. HIGH-RES FULL DAY REPORT PNG GENERATOR
+       18. HIGH-RES FULL DAY REPORT PNG GENERATOR (PROFESSIONAL REDESIGN)
        ========================================================================= */
-function downloadFullDayReportPNG() {
-  const pOrders = getPeriodFilteredOrders();
-  const pExpenses = getPeriodFilteredExpenses();
+    function downloadFullDayReportPNG() {
+      const pOrders = getPeriodFilteredOrders();
+      const pExpenses = getPeriodFilteredExpenses();
 
-  if (pOrders.length === 0 && pExpenses.length === 0) {
-    showToast('No records found for this selected timeline!', 'ph-warning', true);
-    return;
-  }
+      if (pOrders.length === 0 && pExpenses.length === 0) {
+        showToast('No records found for this selected timeline!', 'ph-warning', true);
+        return;
+      }
 
-  const canvas = document.getElementById('hidden-receipt-canvas');
-  const ctx = canvas.getContext('2d');
+      const canvas = document.getElementById('hidden-receipt-canvas');
+      const ctx = canvas.getContext('2d');
 
-  const width = 800; // Increased width for clean table columns
-  
-  // 1. Calculate dynamic height precisely based on text wrapping
-  let totalCalculatedHeight = 280; // Header, KPIs, paddings
-  
-  // Height for Orders
-  totalCalculatedHeight += 40; // Orders section header
-  pOrders.forEach(o => {
-    let itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
-    totalCalculatedHeight += (itemSummary.length > 45) ? 48 : 34; // Multi-line row height
-  });
+      const width = 800; // Increased width for clean table columns
+      
+      // 1. Calculate dynamic height precisely based on text wrapping
+      let totalCalculatedHeight = 280; // Header, KPIs, paddings
+      
+      // Height for Orders
+      totalCalculatedHeight += 40; // Orders section header
+      pOrders.forEach(o => {
+        let itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
+        totalCalculatedHeight += (itemSummary.length > 45) ? 48 : 34; // Multi-line row height
+      });
 
-  // Height for Expenses
-  if (pExpenses.length > 0) {
-    totalCalculatedHeight += 50; // Expense section header
-    totalCalculatedHeight += (pExpenses.length * 32);
-  }
+      // Height for Expenses
+      if (pExpenses.length > 0) {
+        totalCalculatedHeight += 50; // Expense section header
+        totalCalculatedHeight += (pExpenses.length * 32);
+      }
 
-  totalCalculatedHeight += 60; // Footer padding
+      totalCalculatedHeight += 60; // Footer padding
 
-  canvas.width = width;
-  canvas.height = totalCalculatedHeight;
+      canvas.width = width;
+      canvas.height = totalCalculatedHeight;
 
-  // 2. Draw Background
-  ctx.fillStyle = '#f8fafc';
-  ctx.fillRect(0, 0, width, totalCalculatedHeight);
+      // 2. Draw Background
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, width, totalCalculatedHeight);
 
-  // 3. Draw Header Banner (Professional Deep Slate Header)
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(0, 0, width, 100);
+      // 3. Draw Header Banner (Professional Deep Slate Header)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, width, 100);
 
-  // Red Accent Line
-  ctx.fillStyle = '#e11d48';
-  ctx.fillRect(0, 0, width, 5);
+      // Red Accent Line
+      ctx.fillStyle = '#e11d48';
+      ctx.fillRect(0, 0, width, 5);
 
-  ctx.fillStyle = '#ffffff';
-  ctx.textAlign = 'left';
-  ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('CRAVES • ক্রেভ্স', 30, 42);
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('CRAVES • ক্রেভ্স', 30, 42);
 
-  ctx.font = '13px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = '#94a3b8';
-  ctx.fillText('House 8, Road 4, Block C, Mirpur 10 • Hotline: +8801540340852', 30, 65);
+      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('House 8, Road 4, Block C, Mirpur 10 • Hotline: +8801540340852', 30, 65);
 
-  let timelineLabel = '';
-  if (currentReportPeriod === 'today') timelineLabel = `Daily Report • ${new Date().toLocaleDateString('en-GB')}`;
-  else if (currentReportPeriod === 'range') timelineLabel = `Report (${selectedStartDate} to ${selectedEndDate})`;
-  else if (currentReportPeriod === 'month') timelineLabel = `Monthly Sales & Expense Report`;
-  else timelineLabel = `Report • ${selectedCustomMonth}`;
+      let timelineLabel = '';
+      if (currentReportPeriod === 'today') timelineLabel = `Daily Report • ${new Date().toLocaleDateString('en-GB')}`;
+      else if (currentReportPeriod === 'range') timelineLabel = `Report (${selectedStartDate} to ${selectedEndDate})`;
+      else if (currentReportPeriod === 'month') timelineLabel = `Monthly Sales & Expense Report`;
+      else timelineLabel = `Report • ${selectedCustomMonth}`;
 
-  ctx.textAlign = 'right';
-  ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = '#fbbf24';
-  ctx.fillText(timelineLabel, width - 30, 42);
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText(timelineLabel, width - 30, 42);
 
-  ctx.font = '11px "Plus Jakarta Sans", sans-serif';
-  ctx.fillStyle = '#cbd5e1';
-  ctx.fillText(`Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, width - 30, 65);
+      ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillText(`Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, width - 30, 65);
 
-  // 4. Draw KPI Summary Cards
-  const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
-  const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
-  const netProfit = totalRev - totalExp;
+      // 4. Draw KPI Summary Cards
+      const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
+      const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+      const netProfit = totalRev - totalExp;
 
-  const cardWidth = 230;
-  const cardHeight = 70;
-  const cardY = 120;
+      const cardWidth = 230;
+      const cardHeight = 70;
+      const cardY = 120;
 
-  ctx.lineWidth = 1;
+      ctx.lineWidth = 1;
 
-  // --- Total Revenue Card ---
-  ctx.fillStyle = '#ffffff';
-  ctx.strokeStyle = '#e2e8f0';
-  ctx.fillRect(30, cardY, cardWidth, cardHeight);
-  ctx.strokeRect(30, cardY, cardWidth, cardHeight);
-
-  ctx.fillStyle = '#10b981';
-  ctx.fillRect(30, cardY, 4, cardHeight); // Left green border accent
-
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#64748b';
-  ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('TOTAL REVENUE', 46, cardY + 24);
-  ctx.fillStyle = '#0f172a';
-  ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(`৳${totalRev.toLocaleString()}`, 46, cardY + 54);
-
-  // --- Total Expense Card ---
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(285, cardY, cardWidth, cardHeight);
-  ctx.strokeRect(285, cardY, cardWidth, cardHeight);
-
-  ctx.fillStyle = '#e11d48';
-  ctx.fillRect(285, cardY, 4, cardHeight); // Left red border accent
-
-  ctx.fillStyle = '#64748b';
-  ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('TOTAL EXPENSES', 301, cardY + 24);
-  ctx.fillStyle = '#0f172a';
-  ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(`৳${totalExp.toLocaleString()}`, 301, cardY + 54);
-
-  // --- Net Balance Card ---
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(540, cardY, cardWidth, cardHeight);
-  ctx.strokeRect(540, cardY, cardWidth, cardHeight);
-
-  ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
-  ctx.fillRect(540, cardY, 4, cardHeight);
-
-  ctx.fillStyle = '#64748b';
-  ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('NET BALANCE', 556, cardY + 24);
-  ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
-  ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(`৳${netProfit.toLocaleString()}`, 556, cardY + 54);
-
-  let currentY = 225;
-
-  // 5. ITEMIZED ORDERS TABLE
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#0f172a';
-  ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText(`Itemized Sales Orders (${pOrders.length})`, 30, currentY);
-  currentY += 15;
-
-  // Table Header Box
-  ctx.fillStyle = '#e2e8f0';
-  ctx.fillRect(30, currentY, width - 60, 26);
-  ctx.fillStyle = '#475569';
-  ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('TOKEN', 42, currentY + 17);
-  ctx.fillText('TIME', 110, currentY + 17);
-  ctx.fillText('CHANNEL', 185, currentY + 17);
-  ctx.fillText('ORDERED ITEMS', 280, currentY + 17);
-  ctx.textAlign = 'right';
-  ctx.fillText('AMOUNT', width - 42, currentY + 17);
-
-  currentY += 26;
-
-  // Table Rows
-  pOrders.forEach((o, index) => {
-    let itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
-    const isMultiLine = itemSummary.length > 45;
-    const rowHeight = isMultiLine ? 46 : 32;
-
-    // Row Background Zebra Pattern
-    ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
-    ctx.fillRect(30, currentY, width - 60, rowHeight);
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.strokeRect(30, currentY, width - 60, rowHeight);
-
-    // Token
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(`#${o.token}`, 42, currentY + 20);
-
-    // Time
-    ctx.fillStyle = '#64748b';
-    ctx.font = '11px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(o.timeStr, 110, currentY + 20);
-
-    // Channel Badge
-    ctx.fillStyle = '#3b82f6';
-    ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(o.channel || 'Dine-In', 185, currentY + 20);
-
-    // Ordered Items (Wrapped if too long)
-    ctx.fillStyle = '#334155';
-    ctx.font = '11px "Plus Jakarta Sans", sans-serif';
-    if (isMultiLine) {
-      const line1 = itemSummary.substring(0, 42);
-      const line2 = itemSummary.substring(42);
-      ctx.fillText(line1, 280, currentY + 16);
-      ctx.fillText(line2.length > 42 ? line2.substring(0, 40) + '...' : line2, 280, currentY + 32);
-    } else {
-      ctx.fillText(itemSummary, 280, currentY + 20);
-    }
-
-    // Amount
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(`৳${o.total}`, width - 42, currentY + 20);
-
-    currentY += rowHeight;
-  });
-
-  currentY += 30;
-
-  // 6. ITEMIZED EXPENSES TABLE
-  if (pExpenses.length > 0) {
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(`Itemized Daily Expenses (${pExpenses.length})`, 30, currentY);
-    currentY += 15;
-
-    // Header
-    ctx.fillStyle = '#e2e8f0';
-    ctx.fillRect(30, currentY, width - 60, 26);
-    ctx.fillStyle = '#475569';
-    ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('TIME', 42, currentY + 17);
-    ctx.fillText('EXPENSE DESCRIPTION', 130, currentY + 17);
-    ctx.fillText('CATEGORY', 460, currentY + 17);
-    ctx.textAlign = 'right';
-    ctx.fillText('AMOUNT', width - 42, currentY + 17);
-
-    currentY += 26;
-
-    pExpenses.forEach((e, index) => {
-      const rowHeight = 30;
-      ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
-      ctx.fillRect(30, currentY, width - 60, rowHeight);
+      // --- Total Revenue Card ---
+      ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#e2e8f0';
-      ctx.strokeRect(30, currentY, width - 60, rowHeight);
+      ctx.fillRect(30, cardY, cardWidth, cardHeight);
+      ctx.strokeRect(30, cardY, cardWidth, cardHeight);
 
-      // Time
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(30, cardY, 4, cardHeight); // Left green border accent
+
       ctx.textAlign = 'left';
       ctx.fillStyle = '#64748b';
-      ctx.font = '11px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(e.timeStr, 42, currentY + 19);
-
-      // Title
+      ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('TOTAL REVENUE', 46, cardY + 24);
       ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(e.title.length > 40 ? e.title.substring(0, 38) + '...' : e.title, 130, currentY + 19);
+      ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`৳${totalRev.toLocaleString()}`, 46, cardY + 54);
 
-      // Category Tag
-      ctx.fillStyle = '#64748b';
-      ctx.font = '10px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(e.category, 460, currentY + 19);
+      // --- Total Expense Card ---
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(285, cardY, cardWidth, cardHeight);
+      ctx.strokeRect(285, cardY, cardWidth, cardHeight);
 
-      // Amount
-      ctx.textAlign = 'right';
       ctx.fillStyle = '#e11d48';
+      ctx.fillRect(285, cardY, 4, cardHeight); // Left red border accent
+
+      ctx.fillStyle = '#64748b';
       ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`৳${e.amount}`, width - 42, currentY + 19);
+      ctx.fillText('TOTAL EXPENSES', 301, cardY + 24);
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`৳${totalExp.toLocaleString()}`, 301, cardY + 54);
 
-      currentY += rowHeight;
-    });
-  }
+      // --- Net Balance Card ---
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(540, cardY, cardWidth, cardHeight);
+      ctx.strokeRect(540, cardY, cardWidth, cardHeight);
 
-  // 7. Footer Banner
-  currentY += 35;
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '11px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('Generated automatically by CRAVES POS Terminal • Mirpur 10, Dhaka', width / 2, currentY);
+      ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
+      ctx.fillRect(540, cardY, 4, cardHeight);
 
-  // 8. Trigger PNG Download
-  const link = document.createElement('a');
-  link.download = `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('NET BALANCE', 556, cardY + 24);
+      ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
+      ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`৳${netProfit.toLocaleString()}`, 556, cardY + 54);
 
-  showToast('High-Res Full Report PNG Downloaded!');
-}
-}
+      let currentY = 225;
+
+      // 5. ITEMIZED ORDERS TABLE
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`Itemized Sales Orders (${pOrders.length})`, 30, currentY);
+      currentY += 15;
+
+      // Table Header Box
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(30, currentY, width - 60, 26);
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('TOKEN', 42, currentY + 17);
+      ctx.fillText('TIME', 110, currentY + 17);
+      ctx.fillText('CHANNEL', 185, currentY + 17);
+      ctx.fillText('ORDERED ITEMS', 280, currentY + 17);
+      ctx.textAlign = 'right';
+      ctx.fillText('AMOUNT', width - 42, currentY + 17);
+
+      currentY += 26;
+
+      // Table Rows
+      pOrders.forEach((o, index) => {
+        let itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
+        const isMultiLine = itemSummary.length > 45;
+        const rowHeight = isMultiLine ? 46 : 32;
+
+        // Row Background Zebra Pattern
+        ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
+        ctx.fillRect(30, currentY, width - 60, rowHeight);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.strokeRect(30, currentY, width - 60, rowHeight);
+
+        // Token
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`#${o.token}`, 42, currentY + 20);
+
+        // Time
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(o.timeStr, 110, currentY + 20);
+
+        // Channel Badge
+        ctx.fillStyle = '#3b82f6';
+        ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(o.channel || 'Dine-In', 185, currentY + 20);
+
+        // Ordered Items (Wrapped if too long)
+        ctx.fillStyle = '#334155';
+        ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+        if (isMultiLine) {
+          const line1 = itemSummary.substring(0, 42);
+          const line2 = itemSummary.substring(42);
+          ctx.fillText(line1, 280, currentY + 16);
+          ctx.fillText(line2.length > 42 ? line2.substring(0, 40) + '...' : line2, 280, currentY + 32);
+        } else {
+          ctx.fillText(itemSummary, 280, currentY + 20);
+        }
+
+        // Amount
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`৳${o.total}`, width - 42, currentY + 20);
+
+        currentY += rowHeight;
+      });
+
+      currentY += 30;
+
+      // 6. ITEMIZED EXPENSES TABLE
+      if (pExpenses.length > 0) {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`Itemized Daily Expenses (${pExpenses.length})`, 30, currentY);
+        currentY += 15;
+
+        // Header
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(30, currentY, width - 60, 26);
+        ctx.fillStyle = '#475569';
+        ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('TIME', 42, currentY + 17);
+        ctx.fillText('EXPENSE DESCRIPTION', 130, currentY + 17);
+        ctx.fillText('CATEGORY', 460, currentY + 17);
+        ctx.textAlign = 'right';
+        ctx.fillText('AMOUNT', width - 42, currentY + 17);
+
+        currentY += 26;
+
+        pExpenses.forEach((e, index) => {
+          const rowHeight = 30;
+          ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
+          ctx.fillRect(30, currentY, width - 60, rowHeight);
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.strokeRect(30, currentY, width - 60, rowHeight);
+
+          // Time
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#64748b';
+          ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(e.timeStr, 42, currentY + 19);
+
+          // Title
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(e.title.length > 40 ? e.title.substring(0, 38) + '...' : e.title, 130, currentY + 19);
+
+          // Category Tag
+          ctx.fillStyle = '#64748b';
+          ctx.font = '10px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(e.category, 460, currentY + 19);
+
+          // Amount
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#e11d48';
+          ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(`৳${e.amount}`, width - 42, currentY + 19);
+
+          currentY += rowHeight;
+        });
+      }
+
+      // 7. Footer Banner
+      currentY += 35;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('Generated automatically by CRAVES POS Terminal • Mirpur 10, Dhaka', width / 2, currentY);
+
+      // 8. Trigger PNG Download
+      const link = document.createElement('a');
+      link.download = `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      showToast('High-Res Full Report PNG Downloaded!');
+    }
+
     function downloadActiveReceiptPNG() {
       if (!latestOrder) {
         showToast('No active order to export.', 'ph-warning', true);

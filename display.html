@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRAVES • Customer Order Display</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(225, 29, 72, 0.2); }
+      50% { transform: scale(1.03); box-shadow: 0 0 40px rgba(225, 29, 72, 0.4); }
+    }
+    .ready-card-anim { animation: pulseGlow 2s infinite ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between p-6 select-none overflow-hidden">
+
+  <!-- APP HEADER -->
+  <header class="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-600 to-amber-500 text-white font-black flex items-center justify-center text-2xl shadow-lg shadow-rose-900/50">
+        C
+      </div>
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-white">CRAVES <span class="text-rose-500 text-lg">• ক্রেভ্স</span></h1>
+        <p class="text-xs text-slate-400 font-medium">Order Pick-up Counter Display</p>
+      </div>
+    </div>
+
+    <!-- VOICE & AUDIO ENABLE BANNER -->
+    <button id="enable-voice-btn" onclick="enableAudioAndVoice()" class="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-rose-900/40">
+      <i class="ph ph-speaker-high text-lg"></i>
+      <span id="voice-btn-text">Tap to Enable Voice Announcements</span>
+    </button>
+  </header>
+
+  <!-- MAIN DISPLAY BOARD -->
+  <main class="flex-1 my-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- LEFT: READY FOR PICKUP (LARGER SECTION) -->
+    <div class="lg:col-span-8 bg-slate-900/80 rounded-3xl border border-rose-500/30 p-6 flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <h2 class="text-xl font-extrabold text-emerald-400 flex items-center gap-2 tracking-wide uppercase">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+          Ready For Pick-Up
+        </h2>
+        <span class="text-xs text-slate-400 font-bold" id="ready-count-tag">0 Orders</span>
+      </div>
+
+      <div id="ready-orders-grid" class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-4 auto-rows-max overflow-y-auto pr-1">
+        <!-- Ready items populated dynamically -->
+      </div>
+    </div>
+
+    <!-- RIGHT: PREPARING NOW (SMALLER SECTION) -->
+    <div class="lg:col-span-4 bg-slate-900/40 rounded-3xl border border-slate-800 p-6 flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <h2 class="text-lg font-bold text-amber-400 flex items-center gap-2 tracking-wide uppercase">
+          <i class="ph ph-cooking-pot text-xl"></i>
+          Preparing
+        </h2>
+        <span class="text-xs text-slate-400 font-bold" id="preparing-count-tag">0 Orders</span>
+      </div>
+
+      <div id="preparing-orders-grid" class="flex-1 grid grid-cols-2 gap-3 auto-rows-max overflow-y-auto">
+        <!-- Preparing items populated dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER TICKER -->
+  <footer class="border-t border-slate-800 pt-3 flex items-center justify-between text-xs text-slate-400 font-semibold">
+    <span>Please show your token ticket at the counter when picking up your order!</span>
+    <span class="text-rose-400">Thank you for dining with CRAVES!</span>
+  </footer>
+
+  <!-- JAVASCRIPT & VOICE LOGIC -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD4TpmuCqQd21SIRZXj-15lwGHa5nC0oYE",
+      authDomain: "craves-pos.firebaseapp.com",
+      projectId: "craves-pos",
+      storageBucket: "craves-pos.firebasestorage.app",
+      messagingSenderId: "312607021789",
+      appId: "1:312607021789:web:59fc308c18a9c7b701d934",
+      measurementId: "G-P5QPYFR30C"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let announcedTokens = new Set();
+    let isVoiceEnabled = false;
+    let initialLoadComplete = false;
+
+    // Enable Web Speech API synthesis on initial user gesture
+    function enableAudioAndVoice() {
+      isVoiceEnabled = true;
+      const btn = document.getElementById('enable-voice-btn');
+      const text = document.getElementById('voice-btn-text');
+      
+      btn.className = 'flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold transition';
+      text.innerText = 'Voice Announcements Active';
+
+      // Test speech
+      speakCuteAnnouncement('Welcome to CRAVES! Voice notifications are now enabled.');
+    }
+
+    // Cute voice speech engine
+    function speakCuteAnnouncement(message) {
+      if (!('speechSynthesis' in window)) return;
+
+      window.speechSynthesis.cancel(); // Stop ongoing speech
+
+      const utterance = new SpeechSynthesisUtterance(message);
+      const voices = window.speechSynthesis.getVoices();
+
+      // Find a pleasant female voice
+      const preferredVoice = voices.find(v => 
+        (v.lang.includes('en') || v.lang.includes('UK') || v.lang.includes('US')) && 
+        (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Zira') || v.name.includes('Natural'))
+      );
+
+      if (preferredVoice) utterance.voice = preferredVoice;
+
+      // Adjust pitch and rate for a friendly, cheerful, cute tone
+      utterance.pitch = 1.35; // Slightly higher pitch for a cute sound
+      utterance.rate = 0.95;  // Slightly natural reading pace
+      utterance.volume = 1.0;
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Load available voices
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+
+    // Listen to Firebase orders real-time updates
+    db.collection('craves_orders').onSnapshot((snapshot) => {
+      const readyOrders = [];
+      const preparingOrders = [];
+
+      snapshot.forEach(doc => {
+        const order = doc.data();
+        if (order.status === 'Ready') {
+          readyOrders.push(order);
+        } else if (order.status === 'Preparing') {
+          preparingOrders.push(order);
+        }
+      });
+
+      renderReadyOrders(readyOrders);
+      renderPreparingOrders(preparingOrders);
+
+      // Trigger announcement for newly marked 'Ready' orders
+      if (initialLoadComplete) {
+        readyOrders.forEach(order => {
+          if (!announcedTokens.has(order.token)) {
+            announcedTokens.add(order.token);
+            if (isVoiceEnabled) {
+              const msg = `Order number ${order.token} is ready! Please collect your food from the counter. Thank you!`;
+              speakCuteAnnouncement(msg);
+            }
+          }
+        });
+      } else {
+        // Mark current ready orders as already known on initial load to avoid shouting all old orders
+        readyOrders.forEach(o => announcedTokens.add(o.token));
+        initialLoadComplete = true;
+      }
+    });
+
+    function renderReadyOrders(orders) {
+      const grid = document.getElementById('ready-orders-grid');
+      document.getElementById('ready-count-tag').innerText = `${orders.length} Orders`;
+
+      if (orders.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-16 text-center text-slate-600 text-sm font-semibold">
+            No orders currently waiting for pickup.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = orders.map(o => `
+        <div class="bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-emerald-500/80 rounded-2xl p-4 text-center ready-card-anim flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-black uppercase text-emerald-400 tracking-wider bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">READY</span>
+            <div class="text-4xl sm:text-5xl font-black text-white my-2 tracking-tight">#${o.token}</div>
+          </div>
+          <div class="text-xs text-slate-400 font-bold truncate">
+            ${o.customer && o.customer !== 'Walk-in' ? o.customer : o.table}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPreparingOrders(orders) {
+      const grid = document.getElementById('preparing-orders-grid');
+      document.getElementById('preparing-count-tag').innerText = `${orders.length} Orders`;
+
+      if (orders.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-10 text-center text-slate-600 text-xs font-semibold">
+            Kitchen queue clear.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = orders.map(o => `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center">
+          <div class="text-2xl font-black text-amber-400">#${o.token}</div>
+          <div class="text-[10px] text-slate-500 font-medium truncate">${o.table}</div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

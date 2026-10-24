@@ -155,6 +155,10 @@
           <i class="ph ph-sign-out text-base"></i>
           <span class="hidden md:inline">Logout</span>
         </button>
+        <a href="display.html" target="_blank" title="Open Customer Order Display Screen" class="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+  <i class="ph ph-desktop text-base text-amber-600"></i>
+  <span class="hidden md:inline">Display Screen</span>
+</a>
       </div>
     </div>
 
@@ -518,13 +522,19 @@
               </div>
             </div>
 
-            <div>
-              <label class="block font-bold text-slate-600 mb-1">Paid From</label>
-              <select id="expense-payment-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white">
-                <option value="Cash Drawer">Cash Drawer</option>
-                <option value="bKash / Nagad">bKash / Nagad</option>
-                <option value="Personal / Pocket">Personal / Pocket</option>
-              </select>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-600 mb-1">Paid From</label>
+                <select id="expense-payment-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white">
+                  <option value="Cash Drawer">Cash Drawer</option>
+                  <option value="bKash / Nagad">bKash / Nagad</option>
+                  <option value="Personal / Pocket">Personal / Pocket</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 mb-1">Expense Date</label>
+                <input type="date" id="expense-date-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white font-bold" />
+              </div>
             </div>
 
             <button type="submit" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-md shadow-rose-200 transition flex items-center justify-center gap-1.5">
@@ -815,6 +825,10 @@
         <div>
           <span class="text-[10px] uppercase font-bold text-slate-400 block">Customer</span>
           <span id="confirm-meta-customer" class="font-extrabold text-slate-800">Walk-in</span>
+        </div>
+        <div class="col-span-2 pt-1 border-t border-slate-200">
+          <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Order Date (Past / Present)</span>
+          <input type="date" id="confirm-order-date-input" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 focus:border-rose-500" />
         </div>
       </div>
 
@@ -1346,10 +1360,12 @@
       const startInput = document.getElementById('report-date-start');
       const endInput = document.getElementById('report-date-end');
       const monthInput = document.getElementById('report-month-input');
+      const expDateInput = document.getElementById('expense-date-input');
 
       if (startInput) startInput.value = todayISO;
       if (endInput) endInput.value = todayISO;
       if (monthInput) monthInput.value = monthStr;
+      if (expDateInput) expDateInput.value = todayISO;
 
       setMenuDisplaySize(menuDisplaySize);
 
@@ -1935,6 +1951,10 @@
       document.getElementById('confirm-meta-channel').innerText = `${activeChannel} • ${tableVal}`;
       document.getElementById('confirm-meta-customer').innerText = custVal;
 
+      const todayISO = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('confirm-order-date-input');
+      if (dateInput) dateInput.value = todayISO;
+
       let subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
       let finalPayable = Math.max(0, subtotal - manualDiscount);
 
@@ -2052,6 +2072,11 @@
 
       const tableVal = document.getElementById('order-table-input').value || document.getElementById('m-order-table-input').value || 'Table 1';
       const custVal = document.getElementById('order-customer-input').value || document.getElementById('m-order-customer-input').value || 'Walk-in';
+      const dateVal = document.getElementById('confirm-order-date-input').value;
+
+      const orderDate = dateVal ? new Date(dateVal + 'T12:00:00') : new Date();
+      const dateStr = orderDate.toLocaleDateString('en-GB');
+      const timeStr = orderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       let subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
       let finalPayable = Math.max(0, subtotal - manualDiscount);
@@ -2072,9 +2097,9 @@
 
       const newOrder = {
         token: assignedToken,
-        timestamp: new Date().toISOString(),
-        timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        dateStr: new Date().toLocaleDateString('en-GB'),
+        timestamp: orderDate.toISOString(),
+        timeStr: timeStr,
+        dateStr: dateStr,
         channel: activeChannel,
         table: tableVal,
         customer: custVal,
@@ -2393,11 +2418,16 @@
       const amount = parseFloat(document.getElementById('expense-amount-input').value) || 0;
       const category = document.getElementById('expense-category-input').value;
       const paymentMethod = document.getElementById('expense-payment-input').value;
+      const dateVal = document.getElementById('expense-date-input').value;
 
       if (!title || amount <= 0) {
         showToast('Enter valid expense title and amount!', 'ph-warning', true);
         return;
       }
+
+      const expenseDate = dateVal ? new Date(dateVal + 'T12:00:00') : new Date();
+      const dateStr = expenseDate.toLocaleDateString('en-GB');
+      const timeStr = expenseDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       const expId = 'exp_' + Date.now();
       const newExpense = {
@@ -2405,15 +2435,18 @@
         amount,
         category,
         paymentMethod,
-        timestamp: new Date().toISOString(),
-        timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        dateStr: new Date().toLocaleDateString('en-GB')
+        timestamp: expenseDate.toISOString(),
+        timeStr,
+        dateStr
       };
 
       try {
         await db.collection('craves_expenses').doc(expId).set(newExpense);
         document.getElementById('expense-title-input').value = '';
         document.getElementById('expense-amount-input').value = '';
+        if (document.getElementById('expense-date-input')) {
+          document.getElementById('expense-date-input').value = new Date().toISOString().split('T')[0];
+        }
         showToast(`Expense of ৳${amount} synced to cloud!`);
       } catch (err) {
         console.error(err);
@@ -3401,6 +3434,7 @@
       y += 16;
 
       ctx.textAlign = 'center';
+      key = 'bold 11px Courier, monospace';
       ctx.font = 'bold 11px Courier, monospace';
       ctx.fillText('THANK YOU FOR YOUR CRAVING!', width / 2, y);
       y += 14;

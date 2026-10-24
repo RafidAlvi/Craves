@@ -42,10 +42,13 @@
     </div>
 
     <!-- VOICE & AUDIO ENABLE BANNER -->
-    <button id="enable-voice-btn" onclick="enableAudioAndVoice()" class="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-rose-900/40">
-      <i class="ph ph-speaker-high text-lg"></i>
-      <span id="voice-btn-text">Tap to Enable Voice Announcements</span>
-    </button>
+    <div class="flex items-center gap-3">
+      <span id="voice-status-indicator" class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-800">Natural Bangla Audio Stream Ready ✓</span>
+      <button id="enable-voice-btn" onclick="enableAudioAndVoice()" class="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-rose-900/45">
+        <i class="ph ph-speaker-high text-lg"></i>
+        <span id="voice-btn-text">Tap to Enable Voice</span>
+      </button>
+    </div>
   </header>
 
   <!-- MAIN DISPLAY BOARD -->
@@ -88,7 +91,7 @@
     <span class="text-rose-400">Thank you for dining with CRAVES!</span>
   </footer>
 
-  <!-- JAVASCRIPT & VOICE LOGIC -->
+  <!-- JAVASCRIPT & DUAL SPEECH ENGINE (EN TTS + BN AUDIO STREAM) -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD4TpmuCqQd21SIRZXj-15lwGHa5nC0oYE",
@@ -107,45 +110,64 @@
     let isVoiceEnabled = false;
     let initialLoadComplete = false;
 
-    // Enable Web Speech API synthesis on initial user gesture
+    // Enable Web Speech API & Audio on initial user gesture
     function enableAudioAndVoice() {
       isVoiceEnabled = true;
+
       const btn = document.getElementById('enable-voice-btn');
       const text = document.getElementById('voice-btn-text');
       
-      btn.className = 'flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold transition';
-      text.innerText = 'Voice Announcements Active';
+      btn.className = 'flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold transition shadow-lg';
+      text.innerText = 'Voice Active';
 
-      // Test speech
-      speakCuteAnnouncement('Welcome to CRAVES! Voice notifications are now enabled.');
+      // Test announcement
+      speakBilingualAnnouncement('101');
     }
 
-    // Cute voice speech engine
-    function speakCuteAnnouncement(message) {
-      if (!('speechSynthesis' in window)) return;
+    // Play Bengali Speech Stream
+    function speakBengaliStream(token) {
+      const banglaText = `অর্ডার নম্বর ${token} প্রস্তুত! অনুগ্রহ করে কাউন্টার থেকে খাবার সংগ্রহ করুন।`;
+      const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(banglaText)}&tl=bn&client=tw-ob`;
+      
+      const audio = new Audio(audioUrl);
+      audio.play().catch(e => console.log("Bangla audio stream playback failed:", e));
+    }
+
+    // Bilingual Announcement Sequence (Cute English -> High Quality Bangla Audio)
+    function speakBilingualAnnouncement(token) {
+      if (!('speechSynthesis' in window)) {
+        speakBengaliStream(token);
+        return;
+      }
 
       window.speechSynthesis.cancel(); // Stop ongoing speech
 
-      const utterance = new SpeechSynthesisUtterance(message);
+      const englishText = `Order number ${token} is ready! Please collect your food from the counter.`;
+      
       const voices = window.speechSynthesis.getVoices();
+      const enVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Zira'))) || voices.find(v => v.lang.startsWith('en'));
 
-      // Find a pleasant female voice
-      const preferredVoice = voices.find(v => 
-        (v.lang.includes('en') || v.lang.includes('UK') || v.lang.includes('US')) && 
-        (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Zira') || v.name.includes('Natural'))
-      );
+      // 1. English Speech Synthesis
+      const utteranceEn = new SpeechSynthesisUtterance(englishText);
+      if (enVoice) utteranceEn.voice = enVoice;
+      utteranceEn.rate = 1.05;
+      utteranceEn.pitch = 1.60; // Cute, cheerful pitch
 
-      if (preferredVoice) utterance.voice = preferredVoice;
+      // 2. Chain Bangla Audio Stream right after English ends
+      utteranceEn.onend = () => {
+        setTimeout(() => {
+          speakBengaliStream(token);
+        }, 150);
+      };
 
-      // Adjust pitch and rate for a friendly, cheerful, cute tone
-      utterance.pitch = 1.35; // Slightly higher pitch for a cute sound
-      utterance.rate = 0.95;  // Slightly natural reading pace
-      utterance.volume = 1.0;
+      utteranceEn.onerror = () => {
+        speakBengaliStream(token);
+      };
 
-      window.speechSynthesis.speak(utterance);
+      window.speechSynthesis.speak(utteranceEn);
     }
 
-    // Load available voices
+    // Preload system voices
     if ('speechSynthesis' in window) {
       window.speechSynthesis.onvoiceschanged = () => {
         window.speechSynthesis.getVoices();
@@ -175,13 +197,11 @@
           if (!announcedTokens.has(order.token)) {
             announcedTokens.add(order.token);
             if (isVoiceEnabled) {
-              const msg = `Order number ${order.token} is ready! Please collect your food from the counter. Thank you!`;
-              speakCuteAnnouncement(msg);
+              speakBilingualAnnouncement(order.token);
             }
           }
         });
       } else {
-        // Mark current ready orders as already known on initial load to avoid shouting all old orders
         readyOrders.forEach(o => announcedTokens.add(o.token));
         initialLoadComplete = true;
       }

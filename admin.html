@@ -155,10 +155,6 @@
           <i class="ph ph-sign-out text-base"></i>
           <span class="hidden md:inline">Logout</span>
         </button>
-        <a href="display.html" target="_blank" title="Open Customer Order Display Screen" class="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
-  <i class="ph ph-desktop text-base text-amber-600"></i>
-  <span class="hidden md:inline">Display Screen</span>
-</a>
       </div>
     </div>
 
@@ -174,6 +170,10 @@
         </button>
         <button onclick="switchTab('menumgr')" id="tab-btn-menumgr" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
           <i class="ph ph-fork-knife text-base"></i> Menu & Categories
+        </button>
+        <button onclick="switchTab('buying')" id="tab-btn-buying" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+          <i class="ph ph-shopping-cart text-base"></i> Buying List
+          <span id="buying-pending-badge" class="bg-indigo-500 text-white rounded-full text-[10px] px-1.5 py-0.2 font-bold hidden">0</span>
         </button>
         <button onclick="switchTab('expense')" id="tab-btn-expense" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
           <i class="ph ph-wallet text-base"></i> Expenses
@@ -483,6 +483,104 @@
       </div>
     </div>
 
+    <!-- VIEW: BUYING LIST / NEXT DAY PREP -->
+    <div id="view-buying" class="view-panel hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Add Buying Item Form Card -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+          <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <i class="ph ph-list-plus text-lg"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">Next Day Buying Item</h3>
+              <p class="text-[11px] text-slate-500">List required raw materials & supplies</p>
+            </div>
+          </div>
+
+          <form onsubmit="handleNewBuyingItemSubmit(event)" class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-600 mb-1">Item Description / Name</label>
+              <input type="text" id="buying-title-input" required placeholder="e.g. Chicken 5kg, Mayo 2L, Buns 30pcs" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 focus:bg-white" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-600 mb-1">Estimated Cost (৳)</label>
+                <input type="number" id="buying-cost-input" placeholder="0" min="0" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:border-indigo-500 focus:bg-white" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 mb-1">Quantity / Unit</label>
+                <input type="text" id="buying-qty-input" placeholder="e.g., 5 kg, 2 pcs" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 focus:bg-white" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-600 mb-1">Category</label>
+                <select id="buying-category-input" class="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 focus:bg-white">
+                  <option value="Raw Materials">Raw Materials (বাজার)</option>
+                  <option value="Beverage Stock">Beverage / Syrups</option>
+                  <option value="Packaging">Packaging & Boxes</option>
+                  <option value="Utility / Gas">Gas / Utility</option>
+                  <option value="Other">Other Miscellaneous</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 mb-1">Target Date</label>
+                <input type="date" id="buying-date-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 focus:bg-white font-bold" />
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-200 transition flex items-center justify-center gap-1.5">
+              <i class="ph ph-plus"></i>
+              <span>Add to Buying List</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Buying Items Checklist & Actions -->
+        <div class="md:col-span-2 space-y-3">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Pending Items</span>
+              <span id="buying-kpi-pending" class="text-lg font-black text-amber-600 mt-0.5 block">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Est. Pending Cost</span>
+              <span id="buying-kpi-estcost" class="text-lg font-black text-slate-800 mt-0.5 block">৳0</span>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Completed & Converted</span>
+              <span id="buying-kpi-done" class="text-lg font-black text-emerald-600 mt-0.5 block">0</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+            <div class="p-3 border-b border-slate-100 flex items-center justify-between">
+              <h4 class="text-xs font-bold text-slate-800">Next Day Purchases & Checklist</h4>
+              <button onclick="clearCompletedBuyingItems()" class="text-[11px] text-rose-500 hover:underline font-semibold">Clear Converted</button>
+            </div>
+            <div class="overflow-x-auto max-h-[380px]">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider sticky top-0">
+                  <tr>
+                    <th class="p-2.5 w-10 text-center">Done</th>
+                    <th class="p-2.5">Item Description</th>
+                    <th class="p-2.5">Qty / Unit</th>
+                    <th class="p-2.5">Category</th>
+                    <th class="p-2.5 text-right">Est. Cost</th>
+                    <th class="p-2.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="buying-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- VIEW 4: DAILY EXPENSES -->
     <div id="view-expense" class="view-panel hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -698,6 +796,10 @@
       <button onclick="switchTab('menumgr')" id="m-nav-menumgr" class="px-2.5 py-1.5 rounded-xl text-slate-500 text-[11px] font-semibold flex flex-col items-center">
         <i class="ph ph-fork-knife text-base"></i>
         <span>Menu</span>
+      </button>
+      <button onclick="switchTab('buying')" id="m-nav-buying" class="px-2.5 py-1.5 rounded-xl text-slate-500 text-[11px] font-semibold flex flex-col items-center">
+        <i class="ph ph-shopping-cart text-base"></i>
+        <span>Buying</span>
       </button>
       <button onclick="switchTab('expense')" id="m-nav-expense" class="px-2.5 py-1.5 rounded-xl text-slate-500 text-[11px] font-semibold flex flex-col items-center">
         <i class="ph ph-wallet text-base"></i>
@@ -1253,6 +1355,7 @@
     let liveMenu = [];
     let orderHistory = [];
     let expenseHistory = [];
+    let buyingHistory = [];
     let currentTokenNumber = 101;
 
     let cart = [];
@@ -1361,11 +1464,16 @@
       const endInput = document.getElementById('report-date-end');
       const monthInput = document.getElementById('report-month-input');
       const expDateInput = document.getElementById('expense-date-input');
+      const buyDateInput = document.getElementById('buying-date-input');
 
       if (startInput) startInput.value = todayISO;
       if (endInput) endInput.value = todayISO;
       if (monthInput) monthInput.value = monthStr;
       if (expDateInput) expDateInput.value = todayISO;
+      
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      if (buyDateInput) buyDateInput.value = tomorrow.toISOString().split('T')[0];
 
       setMenuDisplaySize(menuDisplaySize);
 
@@ -1373,6 +1481,7 @@
       listenToOnlineMenu();
       listenToOnlineOrders();
       listenToOnlineExpenses();
+      listenToOnlineBuyingList();
       renderCart();
     });
 
@@ -1480,6 +1589,20 @@
         });
     }
 
+    function listenToOnlineBuyingList() {
+      db.collection('craves_buying_list')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+          buyingHistory = [];
+          snapshot.forEach(doc => {
+            buyingHistory.push({ ...doc.data(), id: doc.id });
+          });
+          renderBuyingListTable();
+        }, (err) => {
+          console.error('Buying list sync error:', err);
+        });
+    }
+
     /* =========================================================================
        5. NOTIFICATION TOAST
        ========================================================================= */
@@ -1522,7 +1645,7 @@
         desktopBtn.classList.remove('text-slate-600');
       }
 
-      ['pos', 'kds', 'menumgr', 'expense', 'reports'].forEach(id => {
+      ['pos', 'kds', 'menumgr', 'buying', 'expense', 'reports'].forEach(id => {
         const mBtn = document.getElementById(`m-nav-${id}`);
         if (mBtn) {
           if (id === tabId) {
@@ -2410,7 +2533,189 @@
     }
 
     /* =========================================================================
-       13. EXPENSES
+       13. BUYING LIST & NEXT DAY PREP
+       ========================================================================= */
+    async function handleNewBuyingItemSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('buying-title-input').value.trim();
+      const cost = parseFloat(document.getElementById('buying-cost-input').value) || 0;
+      const qty = document.getElementById('buying-qty-input').value.trim();
+      const category = document.getElementById('buying-category-input').value;
+      const targetDate = document.getElementById('buying-date-input').value;
+
+      if (!title) {
+        showToast('Enter a valid item name!', 'ph-warning', true);
+        return;
+      }
+
+      const buyId = 'buy_' + Date.now();
+      const newBuyingItem = {
+        title,
+        cost,
+        qty: qty || '1 unit',
+        category,
+        targetDate: targetDate || new Date().toISOString().split('T')[0],
+        completed: false,
+        convertedToExpense: false,
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        await db.collection('craves_buying_list').doc(buyId).set(newBuyingItem);
+        document.getElementById('buying-title-input').value = '';
+        document.getElementById('buying-cost-input').value = '';
+        document.getElementById('buying-qty-input').value = '';
+        showToast(`Added "${title}" to Buying List!`);
+      } catch (err) {
+        console.error(err);
+        showToast('Saved locally.', 'ph-warning', true);
+      }
+    }
+
+    function renderBuyingListTable() {
+      const tbody = document.getElementById('buying-table-body');
+      const pendingEl = document.getElementById('buying-kpi-pending');
+      const costEl = document.getElementById('buying-kpi-estcost');
+      const doneEl = document.getElementById('buying-kpi-done');
+      const badgeNav = document.getElementById('buying-pending-badge');
+
+      const pendingItems = buyingHistory.filter(b => !b.completed && !b.convertedToExpense);
+      const doneItems = buyingHistory.filter(b => b.completed || b.convertedToExpense);
+      const estCost = pendingItems.reduce((s, b) => s + (b.cost || 0), 0);
+
+      if (pendingEl) pendingEl.innerText = pendingItems.length.toString();
+      if (costEl) costEl.innerText = `৳${estCost}`;
+      if (doneEl) doneEl.innerText = doneItems.length.toString();
+
+      if (badgeNav) {
+        badgeNav.innerText = pendingItems.length.toString();
+        badgeNav.style.display = pendingItems.length > 0 ? 'inline-block' : 'none';
+      }
+
+      if (!tbody) return;
+
+      if (buyingHistory.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-6 text-center text-slate-400 text-xs">
+              No buying items listed. Add items needed for tomorrow!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = buyingHistory.map(b => {
+        const isChecked = b.completed || b.convertedToExpense;
+        return `
+          <tr class="hover:bg-slate-50 transition ${isChecked ? 'bg-slate-50/60 text-slate-400' : ''}">
+            <td class="p-2.5 text-center">
+              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleBuyingItemCheck('${b.id}', this.checked)" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer" />
+            </td>
+            <td class="p-2.5 font-bold ${isChecked ? 'line-through text-slate-400' : 'text-slate-900'}">
+              ${b.title}
+              <div class="text-[10px] text-slate-400 font-normal">Date: ${b.targetDate || 'Next Day'}</div>
+            </td>
+            <td class="p-2.5 text-slate-600 font-medium">${b.qty || '1 unit'}</td>
+            <td class="p-2.5"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-semibold">${b.category}</span></td>
+            <td class="p-2.5 text-right font-black ${isChecked ? 'text-slate-400' : 'text-indigo-600'}">৳${b.cost || 0}</td>
+            <td class="p-2.5 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                ${b.convertedToExpense ? `
+                  <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Added to Expense</span>
+                ` : `
+                  <button onclick="convertBuyingToExpense('${b.id}')" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1">
+                    <i class="ph ph-wallet text-sm"></i> Add to Expense
+                  </button>
+                `}
+                <button onclick="deleteBuyingItemOnline('${b.id}')" class="p-1 text-slate-400 hover:text-rose-600 rounded">
+                  <i class="ph ph-trash text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function toggleBuyingItemCheck(id, completed) {
+      try {
+        await db.collection('craves_buying_list').doc(id).update({ completed });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function convertBuyingToExpense(id) {
+      const item = buyingHistory.find(b => b.id === id);
+      if (!item) return;
+
+      const actualCostStr = prompt(`Confirm expense amount for "${item.title}":`, item.cost || 0);
+      if (actualCostStr === null) return;
+
+      const amount = parseFloat(actualCostStr) || 0;
+      if (amount <= 0) {
+        showToast('Please enter a valid expense amount.', 'ph-warning', true);
+        return;
+      }
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-GB');
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const expId = 'exp_' + Date.now();
+      const newExpense = {
+        title: `${item.title} (${item.qty || ''})`.trim(),
+        amount: amount,
+        category: item.category || 'Raw Materials',
+        paymentMethod: 'Cash Drawer',
+        timestamp: now.toISOString(),
+        timeStr,
+        dateStr
+      };
+
+      try {
+        await db.collection('craves_expenses').doc(expId).set(newExpense);
+        await db.collection('craves_buying_list').doc(id).update({
+          completed: true,
+          convertedToExpense: true,
+          expenseId: expId
+        });
+        showToast(`Converted "${item.title}" to Daily Expense (৳${amount})!`);
+      } catch (err) {
+        console.error(err);
+        showToast('Error converting to expense.', 'ph-warning', true);
+      }
+    }
+
+    async function deleteBuyingItemOnline(id) {
+      if (confirm('Remove item from buying list?')) {
+        try {
+          await db.collection('craves_buying_list').doc(id).delete();
+          showToast('Item removed.');
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    }
+
+    async function clearCompletedBuyingItems() {
+      const completedList = buyingHistory.filter(b => b.completed || b.convertedToExpense);
+      if (completedList.length === 0) {
+        showToast('No converted or completed items to clear.', 'ph-warning', true);
+        return;
+      }
+
+      if (confirm(`Clear ${completedList.length} completed/converted buying items?`)) {
+        for (const item of completedList) {
+          await db.collection('craves_buying_list').doc(item.id).delete();
+        }
+        showToast('Cleared completed items!');
+      }
+    }
+
+    /* =========================================================================
+       14. EXPENSES
        ========================================================================= */
     async function handleNewExpenseSubmit(e) {
       e.preventDefault();
@@ -2518,7 +2823,7 @@
     }
 
     /* =========================================================================
-       14. KITCHEN DISPLAY (KDS)
+       15. KITCHEN DISPLAY (KDS)
        ========================================================================= */
     function renderKDS() {
       const container = document.getElementById('kds-grid');
@@ -2593,7 +2898,7 @@
     }
 
     /* =========================================================================
-       15. 58MM PRINT ENGINE (BROWSER & ANDROID WEBVIEW ADAPTER)
+       16. 58MM PRINT ENGINE (BROWSER & ANDROID WEBVIEW ADAPTER)
        ========================================================================= */
     function populateThermalReceiptDOM(order) {
       if (!order) return;
@@ -2673,7 +2978,7 @@
     }
 
     /* =========================================================================
-       16. TIMELINE & DATE-RANGE FILTERING
+       17. TIMELINE & DATE-RANGE FILTERING
        ========================================================================= */
     function setReportPeriod(period) {
       currentReportPeriod = period;
@@ -2800,7 +3105,7 @@
     }
 
     /* =========================================================================
-       17. ORDER SEARCH, DUE ADJUSTMENTS & DETAILED VIEW
+       18. ORDER SEARCH, DUE ADJUSTMENTS & DETAILED VIEW
        ========================================================================= */
     function filterOrdersTable() {
       const query = (document.getElementById('order-search-input').value || '').toLowerCase().trim();
@@ -3008,7 +3313,7 @@
     }
 
     /* =========================================================================
-       18. HIGH-RES FULL DAY REPORT PNG GENERATOR (PROFESSIONAL REDESIGN)
+       19. HIGH-RES FULL DAY REPORT PNG GENERATOR (PROFESSIONAL REDESIGN)
        ========================================================================= */
     function downloadFullDayReportPNG() {
       const pOrders = getPeriodFilteredOrders();

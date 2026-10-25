@@ -152,9 +152,9 @@
           <span class="hidden md:inline">Report PNG</span>
         </button>
         <a href="display.html" target="_blank" title="Open Customer Order Display Screen" class="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
-  <i class="ph ph-desktop text-base text-amber-600"></i>
-  <span class="hidden md:inline">Display Screen</span>
-</a>
+          <i class="ph ph-desktop text-base text-amber-600"></i>
+          <span class="hidden md:inline">Display Screen</span>
+        </a>
 
         <button onclick="adminLogout()" title="Log out" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
           <i class="ph ph-sign-out text-base"></i>
@@ -360,7 +360,7 @@
                 </div>
                 <div>
                   <label class="block font-bold text-slate-600 mb-1">Badge Color Theme</label>
-                  <select id="cat-color-input" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500">
+                  <select id="cat-color-input" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500">
                     <option value="rose">Rose (Reddish)</option>
                     <option value="amber">Amber (Golden Orange)</option>
                     <option value="emerald">Emerald (Green)</option>
@@ -588,6 +588,22 @@
 
     <!-- VIEW 4: DAILY EXPENSES -->
     <div id="view-expense" class="view-panel hidden space-y-4">
+      
+      <!-- EXPENSE DATE SELECTOR BAR -->
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <i class="ph ph-calendar text-rose-600 text-base"></i>
+          <span class="text-xs font-extrabold text-slate-900">View Expenses For Date:</span>
+          <input type="date" id="expense-view-date" onchange="renderExpensesTable()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:border-rose-500" />
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="setExpenseDateToday()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
+            Today
+          </button>
+          <span id="expense-view-date-label" class="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-xl border border-rose-200"></span>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Add Expense Form Card -->
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
@@ -651,7 +667,7 @@
         <div class="md:col-span-2 space-y-3">
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Today's Total Expense</span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block" id="label-expense-kpi-total">Selected Date Total</span>
               <span id="expense-kpi-total" class="text-lg font-black text-rose-600 mt-0.5 block">৳0</span>
             </div>
             <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
@@ -666,7 +682,7 @@
 
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
             <div class="p-3 border-b border-slate-100 flex items-center justify-between">
-              <h4 class="text-xs font-bold text-slate-800">Expense Ledger</h4>
+              <h4 class="text-xs font-bold text-slate-800">Expense Ledger for Selected Date</h4>
               <button onclick="clearAllExpenses()" class="text-[11px] text-rose-500 hover:underline font-semibold">Clear Expenses</button>
             </div>
             <div class="overflow-x-auto max-h-[360px]">
@@ -741,6 +757,41 @@
         <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
           <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Unsettled Due</span>
           <p id="kpi-unsettled-due" class="text-xl font-extrabold text-amber-600 mt-1">৳0</p>
+        </div>
+      </div>
+
+      <!-- SALES ADVANCED INSIGHTS (TOP 5 ITEMS, AVERAGE ORDER & MONTH/DAY COMPARISON) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <!-- Top 5 Sold Items -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block flex items-center gap-1">
+            <i class="ph ph-trophy text-amber-500 text-base"></i> Top 5 Sold Items (Period)
+          </span>
+          <div id="kpi-top-items" class="space-y-1 text-xs font-semibold text-slate-800">
+            <div class="text-slate-400 italic">No sales recorded yet</div>
+          </div>
+        </div>
+
+        <!-- Average Order Amount -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block flex items-center gap-1">
+              <i class="ph ph-receipt text-indigo-500 text-base"></i> Average Order Amount
+            </span>
+            <p id="kpi-avg-order" class="text-2xl font-black text-indigo-600 mt-2">৳0</p>
+          </div>
+          <span class="text-[10px] text-slate-400 mt-1">Based on orders in selected timeline</span>
+        </div>
+
+        <!-- Period Comparison (Month-over-Month or Day-over-Day) -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block flex items-center gap-1" id="kpi-comparison-title-label">
+              <i class="ph ph-chart-line-up text-emerald-500 text-base"></i> Comparison vs Previous Period
+            </span>
+            <p id="kpi-last-day-comparison" class="text-xl font-black text-slate-900 mt-2">৳0 (0%)</p>
+          </div>
+          <span id="kpi-last-day-sub" class="text-[10px] text-slate-400 mt-1">Previous period revenue: ৳0</span>
         </div>
       </div>
 
@@ -1469,12 +1520,15 @@
       const endInput = document.getElementById('report-date-end');
       const monthInput = document.getElementById('report-month-input');
       const expDateInput = document.getElementById('expense-date-input');
+      const expenseViewDateInput = document.getElementById('expense-view-date');
       const buyDateInput = document.getElementById('buying-date-input');
 
       if (startInput) startInput.value = todayISO;
       if (endInput) endInput.value = todayISO;
       if (monthInput) monthInput.value = monthStr;
       if (expDateInput) expDateInput.value = todayISO;
+      if (expenseViewDateInput) expenseViewDateInput.value = todayISO;
+      updateExpenseDateLabel(todayISO);
       
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -2667,6 +2721,7 @@
       const now = new Date();
       const dateStr = now.toLocaleDateString('en-GB');
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateISO = now.toISOString().split('T')[0];
 
       const expId = 'exp_' + Date.now();
       const newExpense = {
@@ -2676,7 +2731,8 @@
         paymentMethod: 'Cash Drawer',
         timestamp: now.toISOString(),
         timeStr,
-        dateStr
+        dateStr,
+        dateISO
       };
 
       try {
@@ -2720,8 +2776,31 @@
     }
 
     /* =========================================================================
-       14. EXPENSES
+       14. EXPENSES WITH DATE SELECTOR
        ========================================================================= */
+    function setExpenseDateToday() {
+      const todayISO = new Date().toISOString().split('T')[0];
+      const viewInput = document.getElementById('expense-view-date');
+      if (viewInput) {
+        viewInput.value = todayISO;
+        renderExpensesTable();
+      }
+    }
+
+    function updateExpenseDateLabel(dateISO) {
+      const labelEl = document.getElementById('expense-view-date-label');
+      const totalLabelEl = document.getElementById('label-expense-kpi-total');
+      const ledgerTitleEl = document.querySelector('#view-expense h4');
+
+      if (!labelEl) return;
+
+      const [y, m, d] = dateISO.split('-');
+      const formatted = `${d}/${m}/${y}`;
+      labelEl.innerText = formatted;
+      if (totalLabelEl) totalLabelEl.innerText = `Expenses for ${formatted}`;
+      if (ledgerTitleEl) ledgerTitleEl.innerText = `Expense Ledger for ${formatted}`;
+    }
+
     async function handleNewExpenseSubmit(e) {
       e.preventDefault();
       const title = document.getElementById('expense-title-input').value.trim();
@@ -2737,6 +2816,7 @@
 
       const expenseDate = dateVal ? new Date(dateVal + 'T12:00:00') : new Date();
       const dateStr = expenseDate.toLocaleDateString('en-GB');
+      const dateISO = expenseDate.toISOString().split('T')[0];
       const timeStr = expenseDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       const expId = 'exp_' + Date.now();
@@ -2747,7 +2827,8 @@
         paymentMethod,
         timestamp: expenseDate.toISOString(),
         timeStr,
-        dateStr
+        dateStr,
+        dateISO
       };
 
       try {
@@ -2769,29 +2850,40 @@
       const totalEl = document.getElementById('expense-kpi-total');
       const cashEl = document.getElementById('expense-kpi-cash');
       const countEl = document.getElementById('expense-kpi-count');
+      const viewInput = document.getElementById('expense-view-date');
 
-      const todayStr = new Date().toLocaleDateString('en-GB');
-      const todayExpenses = expenseHistory.filter(e => e.dateStr === todayStr);
+      const selectedISO = viewInput ? viewInput.value : new Date().toISOString().split('T')[0];
+      updateExpenseDateLabel(selectedISO);
 
-      const totalExpense = todayExpenses.reduce((s, e) => s + e.amount, 0);
-      const cashExpense = todayExpenses.filter(e => e.paymentMethod === 'Cash Drawer').reduce((s, e) => s + e.amount, 0);
+      const [y, m, d] = selectedISO.split('-');
+      const targetDateStr = `${d}/${m}/${y}`;
 
-      totalEl.innerText = `৳${totalExpense}`;
-      cashEl.innerText = `৳${cashExpense}`;
-      countEl.innerText = todayExpenses.length.toString();
+      const filteredExpenses = expenseHistory.filter(e => {
+        if (e.dateISO) return e.dateISO === selectedISO;
+        return e.dateStr === targetDateStr;
+      });
 
-      if (expenseHistory.length === 0) {
+      const totalExpense = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+      const cashExpense = filteredExpenses.filter(e => e.paymentMethod === 'Cash Drawer').reduce((s, e) => s + e.amount, 0);
+
+      if (totalEl) totalEl.innerText = `৳${totalExpense}`;
+      if (cashEl) cashEl.innerText = `৳${cashExpense}`;
+      if (countEl) countEl.innerText = filteredExpenses.length.toString();
+
+      if (!tbody) return;
+
+      if (filteredExpenses.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="6" class="p-6 text-center text-slate-400 text-xs">
-              No expenses recorded yet.
+              No expenses recorded for ${targetDateStr}.
             </td>
           </tr>
         `;
         return;
       }
 
-      tbody.innerHTML = expenseHistory.map(exp => `
+      tbody.innerHTML = filteredExpenses.map(exp => `
         <tr class="hover:bg-slate-50 transition">
           <td class="p-2.5 text-slate-500 font-medium">${exp.dateStr} ${exp.timeStr}</td>
           <td class="p-2.5 font-bold text-slate-900">${exp.title}</td>
@@ -2983,7 +3075,7 @@
     }
 
     /* =========================================================================
-       17. TIMELINE & DATE-RANGE FILTERING
+       17. TIMELINE, SALES INSIGHTS & DATE-RANGE FILTERING
        ========================================================================= */
     function setReportPeriod(period) {
       currentReportPeriod = period;
@@ -3107,6 +3199,113 @@
       document.getElementById('kpi-today-profit').innerText = `৳${netProfit}`;
       document.getElementById('kpi-today-profit').className = `text-xl font-extrabold mt-1 ${netProfit >= 0 ? 'text-indigo-600' : 'text-rose-600'}`;
       document.getElementById('kpi-unsettled-due').innerText = `৳${unsettledDueTotal}`;
+
+      // --- ADVANCED SALES METRICS ---
+      // 1. Top 5 Sold Items
+      const itemCounts = {};
+      pOrders.forEach(o => {
+        if (o.items) {
+          o.items.forEach(it => {
+            const key = it.name + (it.variantName ? ` (${it.variantName})` : '');
+            itemCounts[key] = (itemCounts[key] || 0) + it.qty;
+          });
+        }
+      });
+      const sortedTopItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const topItemsContainer = document.getElementById('kpi-top-items');
+      if (topItemsContainer) {
+        if (sortedTopItems.length === 0) {
+          topItemsContainer.innerHTML = `<div class="text-slate-400 italic text-xs">No sales recorded yet</div>`;
+        } else {
+          topItemsContainer.innerHTML = sortedTopItems.map(([name, qty], idx) => `
+            <div class="flex items-center justify-between text-xs py-0.5 border-b border-slate-50 last:border-0">
+              <span class="truncate pr-2 font-semibold text-slate-800">${idx + 1}. ${name}</span>
+              <span class="font-black text-rose-600 shrink-0">${qty} sold</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      // 2. Average Order Amount
+      const avgOrderAmount = pOrders.length > 0 ? Math.round(totalRev / pOrders.length) : 0;
+      const avgOrderEl = document.getElementById('kpi-avg-order');
+      if (avgOrderEl) avgOrderEl.innerText = `৳${avgOrderAmount}`;
+
+      // 3. Comparison Metrics (Month-over-Month or Day-over-Day)
+      const now = new Date();
+      let comparisonRevTarget = 0;
+      let comparisonLabel = "";
+      const comparisonTitleLabel = document.getElementById('kpi-comparison-title-label');
+
+      if (currentReportPeriod === 'month') {
+        if (comparisonTitleLabel) {
+          comparisonTitleLabel.innerHTML = `<i class="ph ph-chart-line-up text-emerald-500 text-base"></i> vs Previous Month`;
+        }
+        const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const prevYearMonth = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        const prevMonthOrders = orderHistory.filter(o => {
+          let recYYYYMM = '';
+          if (o.timestamp) {
+            const d = new Date(o.timestamp);
+            recYYYYMM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          } else if (o.dateStr) {
+            const parts = o.dateStr.split('/');
+            if (parts.length === 3) recYYYYMM = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+          }
+          return recYYYYMM === prevYearMonth;
+        });
+        comparisonRevTarget = prevMonthOrders.reduce((s, o) => s + (o.total || 0), 0);
+        comparisonLabel = `Previous month revenue: ৳${comparisonRevTarget} (${prevMonthOrders.length} orders)`;
+      } else if (currentReportPeriod === 'custom') {
+        if (comparisonTitleLabel) {
+          comparisonTitleLabel.innerHTML = `<i class="ph ph-chart-line-up text-emerald-500 text-base"></i> vs Prior Month`;
+        }
+        const [cYear, cMonth] = selectedCustomMonth.split('-').map(Number);
+        const prevCustomDate = new Date(cYear, cMonth - 2, 1);
+        const prevCustomYM = `${prevCustomDate.getFullYear()}-${String(prevCustomDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        const prevCustomOrders = orderHistory.filter(o => {
+          let recYYYYMM = '';
+          if (o.timestamp) {
+            const d = new Date(o.timestamp);
+            recYYYYMM = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          } else if (o.dateStr) {
+            const parts = o.dateStr.split('/');
+            if (parts.length === 3) recYYYYMM = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+          }
+          return recYYYYMM === prevCustomYM;
+        });
+        comparisonRevTarget = prevCustomOrders.reduce((s, o) => s + (o.total || 0), 0);
+        comparisonLabel = `Prior month revenue: ৳${comparisonRevTarget} (${prevCustomOrders.length} orders)`;
+      } else {
+        if (comparisonTitleLabel) {
+          comparisonTitleLabel.innerHTML = `<i class="ph ph-chart-line-up text-emerald-500 text-base"></i> Comparison vs Last Day`;
+        }
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayISO = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = yesterday.toLocaleDateString('en-GB');
+
+        const yesterdayOrders = orderHistory.filter(o => {
+          if (o.timestamp) return o.timestamp.split('T')[0] === yesterdayISO;
+          return o.dateStr === yesterdayStr;
+        });
+        comparisonRevTarget = yesterdayOrders.reduce((s, o) => s + (o.total || 0), 0);
+        comparisonLabel = `Yesterday's revenue: ৳${comparisonRevTarget} (${yesterdayOrders.length} orders)`;
+      }
+
+      const diff = totalRev - comparisonRevTarget;
+      const pct = comparisonRevTarget > 0 ? ((diff / comparisonRevTarget) * 100).toFixed(1) : (totalRev > 0 ? '100.0' : '0.0');
+      const sign = diff >= 0 ? '+' : '';
+      const colorClass = diff >= 0 ? 'text-emerald-600' : 'text-rose-600';
+
+      const comparisonEl = document.getElementById('kpi-last-day-comparison');
+      const comparisonSubEl = document.getElementById('kpi-last-day-sub');
+      if (comparisonEl && comparisonSubEl) {
+        comparisonEl.innerHTML = `<span class="${colorClass}">${sign}৳${Math.abs(diff)} (${sign}${pct}%)</span>`;
+        comparisonSubEl.innerText = comparisonLabel;
+      }
     }
 
     /* =========================================================================

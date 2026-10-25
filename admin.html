@@ -564,7 +564,12 @@
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
             <div class="p-3 border-b border-slate-100 flex items-center justify-between">
               <h4 class="text-xs font-bold text-slate-800">Next Day Purchases & Checklist</h4>
-              <button onclick="clearCompletedBuyingItems()" class="text-[11px] text-rose-500 hover:underline font-semibold">Clear Converted</button>
+              <div class="flex items-center gap-2">
+                <button onclick="downloadBuyingListPNG()" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 flex items-center gap-1 transition">
+                  <i class="ph ph-file-image"></i> Download PNG
+                </button>
+                <button onclick="clearCompletedBuyingItems()" class="text-[11px] text-rose-500 hover:underline font-semibold">Clear Converted</button>
+              </div>
             </div>
             <div class="overflow-x-auto max-h-[380px]">
               <table class="w-full text-left text-xs">
@@ -2592,7 +2597,7 @@
     }
 
     /* =========================================================================
-       13. BUYING LIST & NEXT DAY PREP
+       13. BUYING LIST & NEXT DAY PREP (WITH PNG DOWNLOAD)
        ========================================================================= */
     async function handleNewBuyingItemSubmit(e) {
       e.preventDefault();
@@ -2773,6 +2778,128 @@
         }
         showToast('Cleared completed items!');
       }
+    }
+
+    function downloadBuyingListPNG() {
+      if (buyingHistory.length === 0) {
+        showToast('No buying items to export!', 'ph-warning', true);
+        return;
+      }
+
+      const canvas = document.getElementById('hidden-receipt-canvas');
+      const ctx = canvas.getContext('2d');
+
+      const width = 800;
+      let totalHeight = 220 + (buyingHistory.length * 32) + 60;
+
+      canvas.width = width;
+      canvas.height = totalHeight;
+
+      // Background
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, width, totalHeight);
+
+      // Header Banner
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, width, 90);
+
+      ctx.fillStyle = '#4f46e5'; // Indigo accent line
+      ctx.fillRect(0, 0, width, 5);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('CRAVES • ক্রেভ্স — Next Day Buying List', 30, 38);
+
+      ctx.font = '12px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, 30, 62);
+
+      // Summary
+      const pendingItems = buyingHistory.filter(b => !b.completed && !b.convertedToExpense);
+      const estCost = pendingItems.reduce((s, b) => s + (b.cost || 0), 0);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.fillRect(30, 110, 260, 60);
+      ctx.strokeRect(30, 110, 260, 60);
+
+      ctx.fillStyle = '#4f46e5';
+      ctx.fillRect(30, 110, 4, 60);
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('PENDING BUYING ITEMS & EST. COST', 44, 130);
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`${pendingItems.length} items (৳${estCost.toLocaleString()})`, 44, 155);
+
+      let currentY = 195;
+
+      // Table Header
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(30, currentY, width - 60, 26);
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('STATUS', 42, currentY + 17);
+      ctx.fillText('ITEM DESCRIPTION', 110, currentY + 17);
+      ctx.fillText('QTY / UNIT', 380, currentY + 17);
+      ctx.fillText('CATEGORY', 510, currentY + 17);
+      ctx.textAlign = 'right';
+      ctx.fillText('EST. COST', width - 42, currentY + 17);
+
+      currentY += 26;
+
+      // Table Rows
+      buyingHistory.forEach((b, index) => {
+        const rowHeight = 32;
+        ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
+        ctx.fillRect(30, currentY, width - 60, rowHeight);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.strokeRect(30, currentY, width - 60, rowHeight);
+
+        // Status
+        ctx.textAlign = 'left';
+        ctx.fillStyle = (b.completed || b.convertedToExpense) ? '#10b981' : '#d97706';
+        ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText((b.completed || b.convertedToExpense) ? 'DONE' : 'PENDING', 42, currentY + 20);
+
+        // Title
+        ctx.fillStyle = (b.completed || b.convertedToExpense) ? '#94a3b8' : '#0f172a';
+        ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(b.title.length > 38 ? b.title.substring(0, 36) + '...' : b.title, 110, currentY + 20);
+
+        // Qty
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(b.qty || '1 unit', 380, currentY + 20);
+
+        // Category
+        ctx.fillText(b.category || 'Raw Materials', 510, currentY + 20);
+
+        // Cost
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`৳${b.cost || 0}`, width - 42, currentY + 20);
+
+        currentY += rowHeight;
+      });
+
+      // Footer
+      currentY += 30;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('Generated automatically by CRAVES POS Terminal • Mirpur 10, Dhaka', width / 2, currentY);
+
+      // Download
+      const link = document.createElement('a');
+      link.download = `CRAVES_Buying_List_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      showToast('Buying List PNG Downloaded!');
     }
 
     /* =========================================================================
@@ -3943,7 +4070,6 @@
       y += 16;
 
       ctx.textAlign = 'center';
-      key = 'bold 11px Courier, monospace';
       ctx.font = 'bold 11px Courier, monospace';
       ctx.fillText('THANK YOU FOR YOUR CRAVING!', width / 2, y);
       y += 14;
@@ -4007,7 +4133,7 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

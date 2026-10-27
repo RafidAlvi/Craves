@@ -7,6 +7,8 @@
   
   <!-- Admin Authentication Check (Session or Persistent Remember) -->
 <script>
+    let isSubmittingOrder = false;
+
   const isRemembered = localStorage.getItem('craves_admin_remember') === 'true' && localStorage.getItem('craves_admin_auth') === 'true';
   const isSessionAuth = sessionStorage.getItem('craves_admin_auth') === 'true';
 
@@ -2254,89 +2256,123 @@
     /* =========================================================================
        10. ORDER SUBMISSION (FIRESTORE)
        ========================================================================= */
-    async function finalizeAndCreateOrder() {
-      if (cart.length === 0) return;
 
-      const tableVal = document.getElementById('order-table-input').value || document.getElementById('m-order-table-input').value || 'Table 1';
-      const custVal = document.getElementById('order-customer-input').value || document.getElementById('m-order-customer-input').value || 'Walk-in';
-      const dateVal = document.getElementById('confirm-order-date-input').value;
+      async function finalizeAndCreateOrder() {
+  // ১. ডুপ্লিকেট ক্লিক ব্লক
+  if (isSubmittingOrder) return;
+  if (cart.length === 0) return;
 
-      const now = new Date();
-let orderDate = new Date();
+  isSubmittingOrder = true;
 
-if (dateVal) {
-  const [year, month, day] = dateVal.split('-').map(Number);
-  // ইউজার যে তারিখ সিলেক্ট করেছে তা রাখবে, কিন্তু সময়টি বর্তমান লাইভ ঘড়ি থেকে নেবে
-  orderDate = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+  // কনফার্ম বাটনকে সাময়িকভাবে ডিজেবল ও লোডিং স্টেট দেওয়া
+  const confirmBtn = document.querySelector('#modal-order-confirm button[onclick="finalizeAndCreateOrder()"]');
+  const originalBtnText = confirmBtn ? confirmBtn.innerHTML : '';
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.6';
+    confirmBtn.innerHTML = `<i class="ph ph-spinner animate-spin"></i> <span>Processing...</span>`;
+  }
+
+  try {
+    const tableVal = document.getElementById('order-table-input').value || document.getElementById('m-order-table-input').value || 'Table 1';
+    const custVal = document.getElementById('order-customer-input').value || document.getElementById('m-order-customer-input').value || 'Walk-in';
+    const dateVal = document.getElementById('confirm-order-date-input').value;
+
+    const now = new Date();
+    let orderDate = new Date();
+
+    if (dateVal) {
+      const [year, month, day] = dateVal.split('-').map(Number);
+      orderDate = new Date(year, month - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+    }
+
+    const dateStr = orderDate.toLocaleDateString('en-GB');
+    const timeStr = orderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    let subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
+    let finalPayable = Math.max(0, subtotal - manualDiscount);
+
+    let cashTendered = finalPayable;
+    let changeReturned = 0;
+
+    if (selectedPayment === 'Cash') {
+      cashTendered = parseFloat(document.getElementById('input-cash-tendered').value) || finalPayable;
+      changeReturned = Math.max(0, cashTendered - finalPayable);
+    } else if (selectedPayment === 'Split') {
+      cashTendered = splitCash;
+    } else if (selectedPayment === 'Due') {
+      cashTendered = 0;
+    }
+
+    // ফায়ারস্টোর থেকে লেটেস্ট ম্যাক্সিমাম টোকেন নিশ্চিত করা (Race condition রোধে)
+    let assignedToken = currentTokenNumber;
+    if (orderHistory && orderHistory.length > 0) {
+      const maxToken = Math.max(...orderHistory.map(o => Number(o.token) || 100));
+      assignedToken = Math.max(assignedToken, maxToken + 1);
+    }
+
+    const newOrder = {
+      token: assignedToken,
+      timestamp: orderDate.toISOString(),
+      timeStr: timeStr,
+      dateStr: dateStr,
+      channel: activeChannel,
+      table: tableVal,
+      customer: custVal,
+      items: JSON.parse(JSON.stringify(cart)),
+      subtotal: subtotal,
+      discount: manualDiscount,
+      total: finalPayable,
+      payment: selectedPayment === 'Split' ? `Split (Cash ৳${splitCash} + bKash ৳${splitMfs})` : selectedPayment,
+      paymentStatus: selectedPayment === 'Due' ? 'Due' : 'Paid',
+      cashTendered: cashTendered,
+      splitCash: selectedPayment === 'Split' ? splitCash : 0,
+      splitMfs: selectedPayment === 'Split' ? splitMfs : 0,
+      changeReturned: changeReturned,
+      status: 'Preparing'
+    };
+
+    latestOrder = newOrder;
+
+    // ক্লাউড ফায়ারস্টোরে সেভ
+    await db.collection('craves_orders').doc(`token_${assignedToken}`).set(newOrder);
+    showToast(`Token #${assignedToken} synced to cloud!`);
+
+    // লোকাল কাউন্টার সাথে সাথে বাড়িয়ে নেওয়া যাতে পরবর্তী অর্ডারে সেম টোকেন না পায়
+    currentTokenNumber = assignedToken + 1;
+    document.getElementById('ticket-number-display').innerText = `Token #${currentTokenNumber}`;
+
+    closeOrderConfirmModal();
+    toggleMobileCartDrawer(false);
+    cart = [];
+    manualDiscount = 0;
+
+    const dInput = document.getElementById('cart-discount-input');
+    const mInput = document.getElementById('m-cart-discount-input');
+    if (dInput) dInput.value = '';
+    if (mInput) mInput.value = '';
+
+    renderCart();
+
+    document.getElementById('success-token-title').innerText = `TOKEN #${assignedToken}`;
+    document.getElementById('success-token-meta').innerText = `৳${newOrder.total} • ${newOrder.payment} (${newOrder.paymentStatus})`;
+    document.getElementById('modal-order-success').style.display = 'flex';
+
+  } catch (err) {
+    console.error('Firebase save error:', err);
+    showToast(`Saved locally (Offline Mode).`, 'ph-warning', true);
+  } finally {
+    // অপারেশন শেষ হলে লক ছেড়ে দেওয়া ও বাটন রিস্টোর করা
+    isSubmittingOrder = false;
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.style.opacity = '1';
+      confirmBtn.innerHTML = originalBtnText;
+    }
+  }
 }
 
-const dateStr = orderDate.toLocaleDateString('en-GB');
-const timeStr = orderDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      let subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.qty), 0);
-      let finalPayable = Math.max(0, subtotal - manualDiscount);
-
-      let cashTendered = finalPayable;
-      let changeReturned = 0;
-
-      if (selectedPayment === 'Cash') {
-        cashTendered = parseFloat(document.getElementById('input-cash-tendered').value) || finalPayable;
-        changeReturned = Math.max(0, cashTendered - finalPayable);
-      } else if (selectedPayment === 'Split') {
-        cashTendered = splitCash;
-      } else if (selectedPayment === 'Due') {
-        cashTendered = 0;
-      }
-
-      const assignedToken = currentTokenNumber;
-
-      const newOrder = {
-        token: assignedToken,
-        timestamp: orderDate.toISOString(),
-        timeStr: timeStr,
-        dateStr: dateStr,
-        channel: activeChannel,
-        table: tableVal,
-        customer: custVal,
-        items: JSON.parse(JSON.stringify(cart)),
-        subtotal: subtotal,
-        discount: manualDiscount,
-        total: finalPayable,
-        payment: selectedPayment === 'Split' ? `Split (Cash ৳${splitCash} + bKash ৳${splitMfs})` : selectedPayment,
-        paymentStatus: selectedPayment === 'Due' ? 'Due' : 'Paid',
-        cashTendered: cashTendered,
-        splitCash: selectedPayment === 'Split' ? splitCash : 0,
-        splitMfs: selectedPayment === 'Split' ? splitMfs : 0,
-        changeReturned: changeReturned,
-        status: 'Preparing'
-      };
-
-      latestOrder = newOrder;
-
-      try {
-        await db.collection('craves_orders').doc(`token_${assignedToken}`).set(newOrder);
-        showToast(`Token #${assignedToken} synced to cloud!`);
-      } catch (err) {
-        console.error('Firebase save error:', err);
-        showToast(`Saved locally (Offline Mode).`, 'ph-warning', true);
-      }
-
-      closeOrderConfirmModal();
-      toggleMobileCartDrawer(false);
-      cart = [];
-      manualDiscount = 0;
       
-      const dInput = document.getElementById('cart-discount-input');
-      const mInput = document.getElementById('m-cart-discount-input');
-      if (dInput) dInput.value = '';
-      if (mInput) mInput.value = '';
-
-      renderCart();
-
-      document.getElementById('success-token-title').innerText = `TOKEN #${assignedToken}`;
-      document.getElementById('success-token-meta').innerText = `৳${newOrder.total} • ${newOrder.payment} (${newOrder.paymentStatus})`;
-      document.getElementById('modal-order-success').style.display = 'flex';
-    }
 
     function closeOrderSuccessModal() {
       document.getElementById('modal-order-success').style.display = 'none';

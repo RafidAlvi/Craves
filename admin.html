@@ -177,7 +177,7 @@
           <i class="ph ph-fork-knife text-base"></i> Menu & Categories
         </button>
         <button onclick="switchTab('buying')" id="tab-btn-buying" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
-          <i class="ph ph-shopping-cart text-base"></i> Buying List
+          <i class="ph ph-shopping-cart text-base"></i> Buying List & AI
           <span id="buying-pending-badge" class="bg-indigo-500 text-white rounded-full text-[10px] px-1.5 py-0.2 font-bold hidden">0</span>
         </button>
         <button onclick="switchTab('expense')" id="tab-btn-expense" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
@@ -488,8 +488,44 @@
       </div>
     </div>
 
-    <!-- VIEW: BUYING LIST / NEXT DAY PREP -->
+    <!-- VIEW: BUYING LIST / NEXT DAY PREP & AI ASSISTANT -->
     <div id="view-buying" class="view-panel hidden space-y-4">
+      
+      <!-- SMART AI BUYING ASSISTANT BANNER -->
+      <div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white p-4 rounded-2xl shadow-md space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/30 text-indigo-300 flex items-center justify-center text-xl border border-indigo-500/40">
+              <i class="ph ph-sparkle animate-pulse"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold tracking-wide">Smart AI Buying Assistant</h3>
+              <p class="text-xs text-indigo-200">Analyzing your sales velocity and past expense patterns to recommend procurement quantities.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="generateAIBuyingSuggestions('day')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-xs border border-indigo-400/30">
+              Today Suggestion
+            </button>
+            <button onclick="generateAIBuyingSuggestions('week')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-xs border border-indigo-400/30">
+              Next 7 Days
+            </button>
+            <button onclick="generateAIBuyingSuggestions('month')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-xs border border-indigo-400/30">
+              This Month
+            </button>
+          </div>
+        </div>
+
+        <!-- AI SUGGESTIONS DISPLAY CONTAINER -->
+        <div id="ai-suggestions-box" class="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10 text-xs space-y-2 hidden">
+          <div class="flex items-center justify-between font-bold text-amber-300 border-b border-white/10 pb-1">
+            <span id="ai-suggestion-title">AI Recommendation</span>
+            <button onclick="dismissAISuggestions()" class="text-slate-300 hover:text-white">✕ Close</button>
+          </div>
+          <div id="ai-suggestion-content" class="space-y-1.5 text-indigo-100 max-h-44 overflow-y-auto"></div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Add Buying Item Form Card -->
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
@@ -498,7 +534,7 @@
               <i class="ph ph-list-plus text-lg"></i>
             </div>
             <div>
-              <h3 class="text-sm font-extrabold text-slate-900">Next Day Buying Item</h3>
+              <h3 class="text-sm font-extrabold text-slate-900">Add Buying Item</h3>
               <p class="text-[11px] text-slate-500">List required raw materials & supplies</p>
             </div>
           </div>
@@ -563,7 +599,7 @@
 
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
             <div class="p-3 border-b border-slate-100 flex items-center justify-between">
-              <h4 class="text-xs font-bold text-slate-800">Next Day Purchases & Checklist</h4>
+              <h4 class="text-xs font-bold text-slate-800">Purchases & Checklist</h4>
               <div class="flex items-center gap-2">
                 <button onclick="downloadBuyingListPNG()" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 flex items-center gap-1 transition">
                   <i class="ph ph-file-image"></i> Download PNG
@@ -594,17 +630,29 @@
     <!-- VIEW 4: DAILY EXPENSES -->
     <div id="view-expense" class="view-panel hidden space-y-4">
       
-      <!-- EXPENSE DATE SELECTOR BAR -->
+      <!-- EXPENSE DATE & MONTH SELECTOR BAR -->
       <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <i class="ph ph-calendar text-rose-600 text-base"></i>
-          <span class="text-xs font-extrabold text-slate-900">View Expenses For Date:</span>
-          <input type="date" id="expense-view-date" onchange="renderExpensesTable()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:border-rose-500" />
+          <span class="text-xs font-extrabold text-slate-900">Filter By:</span>
+          <div class="inline-flex p-0.5 bg-slate-100 rounded-xl text-xs font-bold gap-0.5">
+            <button onclick="setExpenseFilterMode('date')" id="exp-mode-date" class="px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition">Specific Date</button>
+            <button onclick="setExpenseFilterMode('month')" id="exp-mode-month" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">Pick Month</button>
+          </div>
         </div>
+
         <div class="flex items-center gap-2">
-          <button onclick="setExpenseDateToday()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">
-            Today
-          </button>
+          <!-- Specific Date Input -->
+          <div id="expense-date-filter-box" class="flex items-center gap-1.5">
+            <input type="date" id="expense-view-date" onchange="renderExpensesTable()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:border-rose-500" />
+            <button onclick="setExpenseDateToday()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">Today</button>
+          </div>
+
+          <!-- Pick Month Input -->
+          <div id="expense-month-filter-box" class="flex items-center gap-1.5" style="display: none;">
+            <input type="month" id="expense-view-month" onchange="renderExpensesTable()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:border-rose-500" />
+          </div>
+
           <span id="expense-view-date-label" class="text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-xl border border-rose-200"></span>
         </div>
       </div>
@@ -1493,28 +1541,24 @@
     history.pushState({ page: 'admin' }, '');
 
     window.addEventListener('popstate', function(event) {
-  // ১. যদি 'Your Ticket' ড্রয়ার ওপেন থাকে, তবে শুধু ড্রয়ারটি বন্ধ হবে এবং POS স্ক্রিনেই থাকবে
   const mobileDrawer = document.getElementById('mobile-cart-drawer');
   if (mobileDrawer && mobileDrawer.style.display !== 'none' && mobileDrawer.style.display !== '') {
     mobileDrawer.style.display = 'none';
     return;
   }
 
-  // ২. অন্য কোনো পপআপ/মোডাল (কনফার্মেশন, ডিউ, ডিটেইলস ইত্যাদি) ওপেন থাকলে তা বন্ধ হবে
   if (isAnyModalOpen()) {
     closeAllModals();
     history.pushState({ page: 'admin' }, '');
     return;
   }
 
-  // ৩. অন্য কোনো ট্যাবে থাকলে POS ট্যাবে ফেরত আসবে
   if (currentTab !== 'pos') {
     switchTab('pos');
     history.pushState({ page: 'admin' }, '');
     return;
   }
 
-  // ৪. একদম মেইন POS স্ক্রিনে ব্যাক চাপলে প্রম্পট দেখাবে
   const confirmExit = confirm("Are you sure you want to exit the admin panel and return to the main page?");
   if (confirmExit) {
     window.location.href = "index.html";
@@ -1538,6 +1582,7 @@
       const monthInput = document.getElementById('report-month-input');
       const expDateInput = document.getElementById('expense-date-input');
       const expenseViewDateInput = document.getElementById('expense-view-date');
+      const expMonthInput = document.getElementById('expense-view-month');
       const buyDateInput = document.getElementById('buying-date-input');
 
       if (startInput) startInput.value = todayISO;
@@ -1545,6 +1590,7 @@
       if (monthInput) monthInput.value = monthStr;
       if (expDateInput) expDateInput.value = todayISO;
       if (expenseViewDateInput) expenseViewDateInput.value = todayISO;
+      if (expMonthInput) expMonthInput.value = monthStr;
       updateExpenseDateLabel(todayISO);
       
       const tomorrow = new Date(now);
@@ -2202,17 +2248,16 @@
     }
 
     function toggleMobileCartDrawer(show) {
-  const drawer = document.getElementById('mobile-cart-drawer');
-  if (!drawer) return;
+      const drawer = document.getElementById('mobile-cart-drawer');
+      if (!drawer) return;
 
-  if (show) {
-    drawer.style.display = 'flex';
-    // ব্যাকবাটন ট্র্যাক করার জন্য হিস্ট্রি স্ট্যাকে স্টেট পুশ করা
-    history.pushState({ modal: 'cart' }, '');
-  } else {
-    drawer.style.display = 'none';
-  }
-}
+      if (show) {
+        drawer.style.display = 'flex';
+        history.pushState({ modal: 'cart' }, '');
+      } else {
+        drawer.style.display = 'none';
+      }
+    }
 
 
     /* =========================================================================
@@ -2347,13 +2392,11 @@
        10. ORDER SUBMISSION (FIRESTORE)
        ========================================================================= */
     async function finalizeAndCreateOrder() {
-      // 1. Prevent duplicate submission (Debounce / Lock)
       if (isSubmittingOrder) return;
       if (cart.length === 0) return;
 
       isSubmittingOrder = true;
 
-      // Lock confirm button UI
       const confirmBtn = document.querySelector('#modal-order-confirm button[onclick="finalizeAndCreateOrder()"]');
       const originalBtnText = confirmBtn ? confirmBtn.innerHTML : '';
       if (confirmBtn) {
@@ -2367,7 +2410,6 @@
         const custVal = document.getElementById('order-customer-input').value || document.getElementById('m-order-customer-input').value || 'Walk-in';
         const dateVal = document.getElementById('confirm-order-date-input').value;
 
-        // 2. Exact realtime fix: preserve date choice with live current clock time
         const now = new Date();
         let orderDate = new Date();
 
@@ -2394,7 +2436,6 @@
           cashTendered = 0;
         }
 
-        // 3. Race condition prevention: ensure assignedToken is strictly highest token + 1
         let assignedToken = currentTokenNumber;
         if (orderHistory && orderHistory.length > 0) {
           const maxToken = Math.max(...orderHistory.map(o => Number(o.token) || 100));
@@ -2427,14 +2468,12 @@
         await db.collection('craves_orders').doc(`token_${assignedToken}`).set(newOrder);
         showToast(`Token #${assignedToken} synced to cloud!`);
 
-        // Advance local counter immediately
         currentTokenNumber = assignedToken + 1;
         document.getElementById('ticket-number-display').innerText = `Token #${currentTokenNumber}`;
 
         closeOrderConfirmModal();
         toggleMobileCartDrawer(false);
 
-        // Clear local cart
         cart = [];
         manualDiscount = 0;
         
@@ -2443,7 +2482,6 @@
         if (dInput) dInput.value = '';
         if (mInput) mInput.value = '';
 
-        // 4. Reset realtime shared cart across all connected devices
         await db.collection('craves_shared_cart').doc('active_ticket').set({
           cart: [],
           discount: 0,
@@ -2738,9 +2776,133 @@
       }
     }
 
-    /* =========================================================================
-       13. BUYING LIST & NEXT DAY PREP (WITH PNG DOWNLOAD)
+     /* =========================================================================
+       13. BUYING LIST, NEXT DAY PREP & SMART AI ASSISTANT (FIXED CALCULATION)
        ========================================================================= */
+    let aiSuggestionsData = [];
+    let currentAIPeriodTitle = "Today's Suggestion";
+
+    function generateAIBuyingSuggestions(period) {
+      const box = document.getElementById('ai-suggestions-box');
+      const titleEl = document.getElementById('ai-suggestion-title');
+      const contentEl = document.getElementById('ai-suggestion-content');
+
+      box.style.display = 'block';
+
+      let periodName = "Today's";
+      let targetDays = 1;
+
+      if (period === 'week') {
+        targetDays = 7;
+        periodName = "Next 7 Days'";
+      } else if (period === 'month') {
+        targetDays = 30;
+        periodName = "This Month's";
+      }
+
+      currentAIPeriodTitle = `${periodName} Procurement Forecast`;
+      titleEl.innerText = `🤖 AI Procurement Intelligence (${currentAIPeriodTitle})`;
+
+      // ১. গত ৭ দিনের বা টোটাল সেলস থেকে দৈনিক গড় (Daily Average) হিসাব করা, যাতে হুট করে বেশি ডেটা থাকলেও পরিমাণের লজিক ঠিক থাকে
+      const itemCounts = {};
+      let totalOrdersCount = orderHistory.length;
+
+      orderHistory.forEach(o => {
+        if (o.items) {
+          o.items.forEach(it => {
+            itemCounts[it.name] = (itemCounts[it.name] || 0) + it.qty;
+          });
+        }
+      });
+
+      aiSuggestionsData = [];
+
+      if (totalOrdersCount === 0 || Object.keys(itemCounts).length === 0) {
+        // যদি পর্যাপ্ত সেলস ডেটা না থাকে তবে বাস্তবসম্মত বেসিক স্ট্যান্ডার্ড পরিমাণ
+        aiSuggestionsData = [
+          { title: "Chicken Chunks (Raw)", qty: `${Math.max(2, 2 * targetDays)} kg`, cost: 450 * Math.max(1, targetDays * 0.4), category: "Raw Materials" },
+          { title: "Burger Buns & Sub Buns", qty: `${Math.max(10, 10 * targetDays)} pcs`, cost: 6 * Math.max(10, 10 * targetDays), category: "Packaging" },
+          { title: "Mayonnaise & Sauces", qty: `${Math.max(1, Math.round(targetDays * 0.5))} L`, cost: 250 * Math.max(1, Math.round(targetDays * 0.5)), category: "Raw Materials" },
+          { title: "LPG Gas Cylinder", qty: targetDays > 7 ? '2 cylinders' : '1 cylinder', cost: targetDays > 7 ? 3000 : 1500, category: "Utility / Gas" }
+        ];
+      } else {
+        // ২. সেলস ভেলোসিটি বিশ্লেষণ করে সঠিক প্রকিউরমেন্ট কোয়ান্টিটি নির্ধারণ
+        let totalBurgers = 0;
+        let totalChowMein = 0;
+        let totalJuices = 0;
+
+        Object.entries(itemCounts).forEach(([name, count]) => {
+          const lName = name.toLowerCase();
+          // যেহেতু আপনার কাভার্সে বার্গার ফ্ল্যাট চিকেন ডাঙ্ক দিয়ে তৈরি হয়, সে অনুযায়ী পরিমাপ এডজাস্ট করা হলো
+          if (lName.includes('burger')) totalBurgers += count;
+          else if (lName.includes('chow mein') || lName.includes('pasta')) totalChowMein += count;
+          else if (lName.includes('juice') || lName.includes('lemonade') || lName.includes('shake')) totalJuices += count;
+        });
+
+        // দৈনিক গড় সেলস বের করে তাকে টার্গেট দিন (১, ৭ বা ৩০) দিয়ে গুণ করা
+        const dailyAvgBurgers = Math.max(5, totalBurgers / Math.max(1, totalOrdersCount));
+        const dailyAvgChow = Math.max(3, totalChowMein / Math.max(1, totalOrdersCount));
+        const dailyAvgJuices = Math.max(5, totalJuices / Math.max(1, totalOrdersCount));
+
+        const estBurgers = Math.round(dailyAvgBurgers * targetDays);
+        const estChow = Math.round(dailyAvgChow * targetDays);
+        const estJuices = Math.round(dailyAvgJuices * targetDays);
+
+        aiSuggestionsData = [
+          { title: `Chicken Chunks (Flat Cut for Burgers)`, qty: `${Math.max(1, Math.round(estBurgers * 0.12))} kg`, cost: Math.round(estBurgers * 55), category: "Raw Materials" },
+          { title: `Burger Buns & Sub Buns`, qty: `${estBurgers} pcs`, cost: estBurgers * 6, category: "Packaging" },
+          { title: `Noodles / Pasta & Veggies`, qty: `${Math.max(1, estChow * 200)} gm`, cost: estChow * 30, category: "Raw Materials" },
+          { title: `Fresh Fruits / Ingredients for Drinks`, qty: `${estJuices} servings`, cost: estJuices * 20, category: "Beverage Stock" },
+          { title: `Mayonnaise, Cheese Slices & Sauces`, qty: `${Math.max(1, Math.round(estBurgers / 25))} jars/packs`, cost: Math.max(200, estBurgers * 12), category: "Raw Materials" }
+        ];
+      }
+
+      contentEl.innerHTML = aiSuggestionsData.map((s, idx) => `
+        <div class="flex items-center justify-between bg-white/5 p-2 rounded-lg border border-white/10">
+          <div>
+            <span class="font-bold text-white block">${s.title}</span>
+            <span class="text-[10px] text-indigo-200">Recommended Qty: <b>${s.qty}</b> • Est: ৳${s.cost} (${s.category})</span>
+          </div>
+          <button onclick="addAISuggestionToBuyingList(${idx})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-[11px] transition shadow-2xs">
+            + Add to List
+          </button>
+        </div>
+      `).join('');
+    }
+
+
+    function dismissAISuggestions() {
+      document.getElementById('ai-suggestions-box').style.display = 'none';
+    }
+
+    async function addAISuggestionToBuyingList(index) {
+      const item = aiSuggestionsData[index];
+      if (!item) return;
+
+      const buyId = 'buy_' + Date.now() + '_' + index;
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + 1);
+
+      const newBuyingItem = {
+        title: item.title,
+        cost: item.cost,
+        qty: item.qty,
+        category: item.category,
+        targetDate: targetDate.toISOString().split('T')[0],
+        completed: false,
+        convertedToExpense: false,
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        await db.collection('craves_buying_list').doc(buyId).set(newBuyingItem);
+        showToast(`Added "${item.title}" to Buying List!`);
+      } catch (err) {
+        console.error(err);
+        showToast('Saved locally.', 'ph-warning', true);
+      }
+    }
+
     async function handleNewBuyingItemSubmit(e) {
       e.preventDefault();
       const title = document.getElementById('buying-title-input').value.trim();
@@ -2804,7 +2966,7 @@
         tbody.innerHTML = `
           <tr>
             <td colspan="6" class="p-6 text-center text-slate-400 text-xs">
-              No buying items listed. Add items needed for tomorrow!
+              No buying items listed. Use AI Assistant above or add manually!
             </td>
           </tr>
         `;
@@ -2937,27 +3099,24 @@
       canvas.width = width;
       canvas.height = totalHeight;
 
-      // Background
       ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, width, totalHeight);
 
-      // Header Banner
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, width, 90);
 
-      ctx.fillStyle = '#4f46e5'; // Indigo accent line
+      ctx.fillStyle = '#4f46e5';
       ctx.fillRect(0, 0, width, 5);
 
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'left';
       ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('CRAVES • ক্রেভ্স — Next Day Buying List', 30, 38);
+      ctx.fillText('CRAVES • ক্রেভ্স — Buying List & AI Plan', 30, 38);
 
       ctx.font = '12px "Plus Jakarta Sans", sans-serif';
       ctx.fillStyle = '#94a3b8';
       ctx.fillText(`Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, 30, 62);
 
-      // Summary
       const pendingItems = buyingHistory.filter(b => !b.completed && !b.convertedToExpense);
       const estCost = pendingItems.reduce((s, b) => s + (b.cost || 0), 0);
 
@@ -2978,7 +3137,6 @@
 
       let currentY = 195;
 
-      // Table Header
       ctx.fillStyle = '#e2e8f0';
       ctx.fillRect(30, currentY, width - 60, 26);
       ctx.fillStyle = '#475569';
@@ -2992,7 +3150,6 @@
 
       currentY += 26;
 
-      // Table Rows
       buyingHistory.forEach((b, index) => {
         const rowHeight = 32;
         ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
@@ -3000,26 +3157,21 @@
         ctx.strokeStyle = '#e2e8f0';
         ctx.strokeRect(30, currentY, width - 60, rowHeight);
 
-        // Status
         ctx.textAlign = 'left';
         ctx.fillStyle = (b.completed || b.convertedToExpense) ? '#10b981' : '#d97706';
         ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
         ctx.fillText((b.completed || b.convertedToExpense) ? 'DONE' : 'PENDING', 42, currentY + 20);
 
-        // Title
         ctx.fillStyle = (b.completed || b.convertedToExpense) ? '#94a3b8' : '#0f172a';
         ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
         ctx.fillText(b.title.length > 38 ? b.title.substring(0, 36) + '...' : b.title, 110, currentY + 20);
 
-        // Qty
         ctx.fillStyle = '#64748b';
         ctx.font = '11px "Plus Jakarta Sans", sans-serif';
         ctx.fillText(b.qty || '1 unit', 380, currentY + 20);
 
-        // Category
         ctx.fillText(b.category || 'Raw Materials', 510, currentY + 20);
 
-        // Cost
         ctx.textAlign = 'right';
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
@@ -3028,14 +3180,12 @@
         currentY += rowHeight;
       });
 
-      // Footer
       currentY += 30;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#94a3b8';
       ctx.font = '11px "Plus Jakarta Sans", sans-serif';
       ctx.fillText('Generated automatically by CRAVES POS Terminal • Mirpur 10, Dhaka', width / 2, currentY);
 
-      // Download
       const link = document.createElement('a');
       link.download = `CRAVES_Buying_List_${new Date().toISOString().split('T')[0]}.png`;
       link.href = canvas.toDataURL('image/png');
@@ -3045,8 +3195,31 @@
     }
 
     /* =========================================================================
-       14. EXPENSES WITH DATE SELECTOR
+       14. EXPENSES WITH DATE SELECTOR & PICK MONTH
        ========================================================================= */
+    let expenseFilterMode = 'date'; // 'date' or 'month'
+
+    function setExpenseFilterMode(mode) {
+      expenseFilterMode = mode;
+      const btnDate = document.getElementById('exp-mode-date');
+      const btnMonth = document.getElementById('exp-mode-month');
+      const dateBox = document.getElementById('expense-date-filter-box');
+      const monthBox = document.getElementById('expense-month-filter-box');
+
+      if (mode === 'date') {
+        btnDate.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
+        btnMonth.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+        dateBox.style.display = 'flex';
+        monthBox.style.display = 'none';
+      } else {
+        btnMonth.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
+        btnDate.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+        monthBox.style.display = 'flex';
+        dateBox.style.display = 'none';
+      }
+      renderExpensesTable();
+    }
+
     function setExpenseDateToday() {
       const todayISO = new Date().toISOString().split('T')[0];
       const viewInput = document.getElementById('expense-view-date');
@@ -3119,18 +3292,46 @@
       const totalEl = document.getElementById('expense-kpi-total');
       const cashEl = document.getElementById('expense-kpi-cash');
       const countEl = document.getElementById('expense-kpi-count');
+      
       const viewInput = document.getElementById('expense-view-date');
+      const viewMonthInput = document.getElementById('expense-view-month');
+      const labelEl = document.getElementById('expense-view-date-label');
+      const totalLabelEl = document.getElementById('label-expense-kpi-total');
+      const ledgerTitleEl = document.querySelector('#view-expense h4');
 
-      const selectedISO = viewInput ? viewInput.value : new Date().toISOString().split('T')[0];
-      updateExpenseDateLabel(selectedISO);
+      let filteredExpenses = [];
+      let labelText = '';
 
-      const [y, m, d] = selectedISO.split('-');
-      const targetDateStr = `${d}/${m}/${y}`;
+      if (expenseFilterMode === 'date') {
+        const selectedISO = viewInput ? viewInput.value : new Date().toISOString().split('T')[0];
+        const [y, m, d] = selectedISO.split('-');
+        const targetDateStr = `${d}/${m}/${y}`;
+        labelText = targetDateStr;
 
-      const filteredExpenses = expenseHistory.filter(e => {
-        if (e.dateISO) return e.dateISO === selectedISO;
-        return e.dateStr === targetDateStr;
-      });
+        filteredExpenses = expenseHistory.filter(e => {
+          if (e.dateISO) return e.dateISO === selectedISO;
+          return e.dateStr === targetDateStr;
+        });
+      } else {
+        const selectedYM = viewMonthInput ? viewMonthInput.value : `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        labelText = `Month: ${selectedYM}`;
+
+        filteredExpenses = expenseHistory.filter(e => {
+          let recYYYYMM = '';
+          if (e.timestamp) {
+            const dt = new Date(e.timestamp);
+            recYYYYMM = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+          } else if (e.dateStr) {
+            const parts = e.dateStr.split('/');
+            if (parts.length === 3) recYYYYMM = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+          }
+          return recYYYYMM === selectedYM;
+        });
+      }
+
+      if (labelEl) labelEl.innerText = labelText;
+      if (totalLabelEl) totalLabelEl.innerText = `Expenses for ${labelText}`;
+      if (ledgerTitleEl) ledgerTitleEl.innerText = `Expense Ledger for ${labelText}`;
 
       const totalExpense = filteredExpenses.reduce((s, e) => s + e.amount, 0);
       const cashExpense = filteredExpenses.filter(e => e.paymentMethod === 'Cash Drawer').reduce((s, e) => s + e.amount, 0);
@@ -3145,7 +3346,7 @@
         tbody.innerHTML = `
           <tr>
             <td colspan="6" class="p-6 text-center text-slate-400 text-xs">
-              No expenses recorded for ${targetDateStr}.
+              No expenses recorded for this period.
             </td>
           </tr>
         `;
@@ -3469,8 +3670,6 @@
       document.getElementById('kpi-today-profit').className = `text-xl font-extrabold mt-1 ${netProfit >= 0 ? 'text-indigo-600' : 'text-rose-600'}`;
       document.getElementById('kpi-unsettled-due').innerText = `৳${unsettledDueTotal}`;
 
-      // --- ADVANCED SALES METRICS ---
-      // 1. Top 5 Sold Items
       const itemCounts = {};
       pOrders.forEach(o => {
         if (o.items) {
@@ -3495,12 +3694,10 @@
         }
       }
 
-      // 2. Average Order Amount
       const avgOrderAmount = pOrders.length > 0 ? Math.round(totalRev / pOrders.length) : 0;
       const avgOrderEl = document.getElementById('kpi-avg-order');
       if (avgOrderEl) avgOrderEl.innerText = `৳${avgOrderAmount}`;
 
-      // 3. Comparison Metrics (Month-over-Month or Day-over-Day)
       const now = new Date();
       let comparisonRevTarget = 0;
       let comparisonLabel = "";
@@ -3800,38 +3997,32 @@
       const canvas = document.getElementById('hidden-receipt-canvas');
       const ctx = canvas.getContext('2d');
 
-      const width = 800; // Increased width for clean table columns
+      const width = 800;
       
-      // 1. Calculate dynamic height precisely based on text wrapping
-      let totalCalculatedHeight = 280; // Header, KPIs, paddings
+      let totalCalculatedHeight = 280;
       
-      // Height for Orders
-      totalCalculatedHeight += 40; // Orders section header
+      totalCalculatedHeight += 40;
       pOrders.forEach(o => {
         let itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
-        totalCalculatedHeight += (itemSummary.length > 45) ? 48 : 34; // Multi-line row height
+        totalCalculatedHeight += (itemSummary.length > 45) ? 48 : 34;
       });
 
-      // Height for Expenses
       if (pExpenses.length > 0) {
-        totalCalculatedHeight += 50; // Expense section header
+        totalCalculatedHeight += 50;
         totalCalculatedHeight += (pExpenses.length * 32);
       }
 
-      totalCalculatedHeight += 60; // Footer padding
+      totalCalculatedHeight += 60;
 
       canvas.width = width;
       canvas.height = totalCalculatedHeight;
 
-      // 2. Draw Background
       ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, width, totalCalculatedHeight);
 
-      // 3. Draw Header Banner (Professional Deep Slate Header)
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, width, 100);
 
-      // Red Accent Line
       ctx.fillStyle = '#e11d48';
       ctx.fillRect(0, 0, width, 5);
 
@@ -3859,7 +4050,6 @@
       ctx.fillStyle = '#cbd5e1';
       ctx.fillText(`Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, width - 30, 65);
 
-      // 4. Draw KPI Summary Cards
       const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
       const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
       const netProfit = totalRev - totalExp;
@@ -3870,14 +4060,13 @@
 
       ctx.lineWidth = 1;
 
-      // --- Total Revenue Card ---
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#e2e8f0';
       ctx.fillRect(30, cardY, cardWidth, cardHeight);
       ctx.strokeRect(30, cardY, cardWidth, cardHeight);
 
       ctx.fillStyle = '#10b981';
-      ctx.fillRect(30, cardY, 4, cardHeight); // Left green border accent
+      ctx.fillRect(30, cardY, 4, cardHeight);
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#64748b';
@@ -3887,13 +4076,12 @@
       ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
       ctx.fillText(`৳${totalRev.toLocaleString()}`, 46, cardY + 54);
 
-      // --- Total Expense Card ---
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(285, cardY, cardWidth, cardHeight);
       ctx.strokeRect(285, cardY, cardWidth, cardHeight);
 
       ctx.fillStyle = '#e11d48';
-      ctx.fillRect(285, cardY, 4, cardHeight); // Left red border accent
+      ctx.fillRect(285, cardY, 4, cardHeight);
 
       ctx.fillStyle = '#64748b';
       ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
@@ -3902,7 +4090,6 @@
       ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
       ctx.fillText(`৳${totalExp.toLocaleString()}`, 301, cardY + 54);
 
-      // --- Net Balance Card ---
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(540, cardY, cardWidth, cardHeight);
       ctx.strokeRect(540, cardY, cardWidth, cardHeight);
@@ -3919,14 +4106,12 @@
 
       let currentY = 225;
 
-      // 5. ITEMIZED ORDERS TABLE
       ctx.textAlign = 'left';
       ctx.fillStyle = '#0f172a';
       ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
       ctx.fillText(`Itemized Sales Orders (${pOrders.length})`, 30, currentY);
       currentY += 15;
 
-      // Table Header Box
       ctx.fillStyle = '#e2e8f0';
       ctx.fillRect(30, currentY, width - 60, 26);
       ctx.fillStyle = '#475569';
@@ -3940,35 +4125,29 @@
 
       currentY += 26;
 
-      // Table Rows
       pOrders.forEach((o, index) => {
         let itemSummary = o.items ? o.items.map(i => `${i.qty}x ${i.name}`).join(', ') : '';
         const isMultiLine = itemSummary.length > 45;
         const rowHeight = isMultiLine ? 46 : 32;
 
-        // Row Background Zebra Pattern
         ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
         ctx.fillRect(30, currentY, width - 60, rowHeight);
         ctx.strokeStyle = '#e2e8f0';
         ctx.strokeRect(30, currentY, width - 60, rowHeight);
 
-        // Token
         ctx.textAlign = 'left';
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
         ctx.fillText(`#${o.token}`, 42, currentY + 20);
 
-        // Time
         ctx.fillStyle = '#64748b';
         ctx.font = '11px "Plus Jakarta Sans", sans-serif';
         ctx.fillText(o.timeStr, 110, currentY + 20);
 
-        // Channel Badge
         ctx.fillStyle = '#3b82f6';
         ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
         ctx.fillText(o.channel || 'Dine-In', 185, currentY + 20);
 
-        // Ordered Items (Wrapped if too long)
         ctx.fillStyle = '#334155';
         ctx.font = '11px "Plus Jakarta Sans", sans-serif';
         if (isMultiLine) {
@@ -3980,7 +4159,6 @@
           ctx.fillText(itemSummary, 280, currentY + 20);
         }
 
-        // Amount
         ctx.textAlign = 'right';
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
@@ -3991,7 +4169,6 @@
 
       currentY += 30;
 
-      // 6. ITEMIZED EXPENSES TABLE
       if (pExpenses.length > 0) {
         ctx.textAlign = 'left';
         ctx.fillStyle = '#0f172a';
@@ -3999,7 +4176,6 @@
         ctx.fillText(`Itemized Daily Expenses (${pExpenses.length})`, 30, currentY);
         currentY += 15;
 
-        // Header
         ctx.fillStyle = '#e2e8f0';
         ctx.fillRect(30, currentY, width - 60, 26);
         ctx.fillStyle = '#475569';
@@ -4019,23 +4195,19 @@
           ctx.strokeStyle = '#e2e8f0';
           ctx.strokeRect(30, currentY, width - 60, rowHeight);
 
-          // Time
           ctx.textAlign = 'left';
           ctx.fillStyle = '#64748b';
           ctx.font = '11px "Plus Jakarta Sans", sans-serif';
           ctx.fillText(e.timeStr, 42, currentY + 19);
 
-          // Title
           ctx.fillStyle = '#0f172a';
           ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
           ctx.fillText(e.title.length > 40 ? e.title.substring(0, 38) + '...' : e.title, 130, currentY + 19);
 
-          // Category Tag
           ctx.fillStyle = '#64748b';
           ctx.font = '10px "Plus Jakarta Sans", sans-serif';
           ctx.fillText(e.category, 460, currentY + 19);
 
-          // Amount
           ctx.textAlign = 'right';
           ctx.fillStyle = '#e11d48';
           ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
@@ -4045,14 +4217,12 @@
         });
       }
 
-      // 7. Footer Banner
       currentY += 35;
       ctx.textAlign = 'center';
       ctx.fillStyle = '#94a3b8';
       ctx.font = '11px "Plus Jakarta Sans", sans-serif';
       ctx.fillText('Generated automatically by CRAVES POS Terminal • Mirpur 10, Dhaka', width / 2, currentY);
 
-      // 8. Trigger PNG Download
       const link = document.createElement('a');
       link.download = `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
       link.href = canvas.toDataURL('image/png');

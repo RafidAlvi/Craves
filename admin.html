@@ -25,6 +25,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons CDN -->
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <!-- html2pdf.js CDN for High-Quality Client-Side PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -150,6 +152,10 @@
         <button onclick="downloadFullDayReportPNG()" title="Download full itemized report as PNG" class="flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
           <i class="ph ph-image text-base text-indigo-600"></i>
           <span class="hidden md:inline">Report PNG</span>
+        </button>
+        <button onclick="downloadFullDayReportPDF()" title="Download executive styled report as PDF" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+          <i class="ph ph-file-pdf text-base text-rose-600"></i>
+          <span class="hidden md:inline">Report PDF</span>
         </button>
         <a href="display.html" target="_blank" title="Open Customer Order Display Screen" class="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
           <i class="ph ph-desktop text-base text-amber-600"></i>
@@ -777,9 +783,23 @@
           </div>
 
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-            <div class="p-3 border-b border-slate-100 flex items-center justify-between">
+            <div class="p-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
               <h4 class="text-xs font-bold text-slate-800">Expense Ledger for Selected Date</h4>
-              <button onclick="clearAllExpenses()" class="text-[11px] text-rose-500 hover:underline font-semibold">Clear Expenses</button>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="downloadExpenseCSV()" title="Export filtered expenses as CSV" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200 flex items-center gap-1 transition">
+                  <i class="ph ph-file-csv text-sm"></i>
+                  <span>CSV</span>
+                </button>
+                <button type="button" onclick="downloadExpensePNG()" title="Export filtered expenses as PNG" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold border border-rose-200 flex items-center gap-1 transition">
+                  <i class="ph ph-image text-sm"></i>
+                  <span>PNG</span>
+                </button>
+                <button type="button" onclick="downloadExpensePDF()" title="Export filtered expenses as PDF" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 flex items-center gap-1 transition">
+                  <i class="ph ph-file-pdf text-sm"></i>
+                  <span>PDF</span>
+                </button>
+                <button type="button" onclick="clearAllExpenses()" class="text-[11px] text-rose-500 hover:underline font-semibold ml-1">Clear Expenses</button>
+              </div>
             </div>
             <div class="overflow-x-auto max-h-[360px]">
               <table class="w-full text-left text-xs">
@@ -901,6 +921,9 @@
           </button>
           <button onclick="downloadFullDayReportPNG()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-200 flex items-center gap-1">
             <i class="ph ph-file-image"></i> Report PNG
+          </button>
+          <button onclick="downloadFullDayReportPDF()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold border border-rose-200 flex items-center gap-1">
+            <i class="ph ph-file-pdf"></i> Report PDF
           </button>
           <button onclick="clearAllOrdersHistory()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold border border-rose-200">
             Clear Logs
@@ -3492,6 +3515,189 @@
     }
 
     /* =========================================================================
+       14B. EXPENSE EXPORT (CSV & PNG)
+       ========================================================================= */
+    function getActiveFilteredExpenses() {
+      const viewInput = document.getElementById('expense-view-date');
+      const viewMonthInput = document.getElementById('expense-view-month');
+
+      if (expenseFilterMode === 'date') {
+        const selectedISO = viewInput ? viewInput.value : new Date().toISOString().split('T')[0];
+        const [y, m, d] = selectedISO.split('-');
+        const targetDateStr = `${d}/${m}/${y}`;
+
+        return {
+          label: targetDateStr,
+          fileTag: selectedISO,
+          records: expenseHistory.filter(e => (e.dateISO ? e.dateISO === selectedISO : e.dateStr === targetDateStr))
+        };
+      } else {
+        const selectedYM = viewMonthInput ? viewMonthInput.value : `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        return {
+          label: `Month_${selectedYM}`,
+          fileTag: selectedYM,
+          records: expenseHistory.filter(e => {
+            let recYYYYMM = '';
+            if (e.timestamp) {
+              const dt = new Date(e.timestamp);
+              recYYYYMM = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+            } else if (e.dateStr) {
+              const parts = e.dateStr.split('/');
+              if (parts.length === 3) recYYYYMM = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+            }
+            return recYYYYMM === selectedYM;
+          })
+        };
+      }
+    }
+
+    function downloadExpenseCSV() {
+      const { label, fileTag, records } = getActiveFilteredExpenses();
+
+      if (!records || records.length === 0) {
+        showToast('No expenses found to export for this period!', 'ph-warning', true);
+        return;
+      }
+
+      let csv = '\uFEFF';
+      csv += `--- CRAVES EXPENSE REPORT (${label}) ---\n`;
+      csv += 'Date,Time,Title,Category,Payment Method,Amount (BDT)\n';
+
+      records.forEach(e => {
+        const cleanTitle = (e.title || '').replace(/"/g, '""');
+        csv += `"${e.dateStr || ''}","${e.timeStr || ''}","${cleanTitle}","${e.category || ''}","${e.paymentMethod || ''}",${e.amount || 0}\n`;
+      });
+
+      const totalExpense = records.reduce((s, e) => s + (e.amount || 0), 0);
+      csv += `\n,,,TOTAL EXPENSES,,${totalExpense}\n`;
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `CRAVES_Expenses_${fileTag}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast('Expense CSV downloaded successfully!');
+    }
+
+    function downloadExpensePNG() {
+      const { label, fileTag, records } = getActiveFilteredExpenses();
+
+      if (!records || records.length === 0) {
+        showToast('No expenses found to export for this period!', 'ph-warning', true);
+        return;
+      }
+
+      const canvas = document.getElementById('hidden-receipt-canvas');
+      const ctx = canvas.getContext('2d');
+
+      const width = 800;
+      let totalCalculatedHeight = 240 + (records.length * 32) + 60;
+
+      canvas.width = width;
+      canvas.height = totalCalculatedHeight;
+
+      // Background
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, width, totalCalculatedHeight);
+
+      // Top Header
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, width, 90);
+      ctx.fillStyle = '#e11d48';
+      ctx.fillRect(0, 0, width, 5);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('CRAVES • ক্রেভ্স — Daily Expense Ledger', 30, 38);
+
+      ctx.font = '12px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`Period: ${label} | Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, 30, 62);
+
+      // Summary KPI Badge
+      const totalCost = records.reduce((s, e) => s + (e.amount || 0), 0);
+      const cashCost = records.filter(e => e.paymentMethod === 'Cash Drawer').reduce((s, e) => s + (e.amount || 0), 0);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.fillRect(30, 105, 340, 50);
+      ctx.strokeRect(30, 105, 340, 50);
+      ctx.fillStyle = '#e11d48';
+      ctx.fillRect(30, 105, 4, 50);
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('TOTAL EXPENSE (ENTRIES)', 44, 123);
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 16px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`৳${totalCost.toLocaleString()} (${records.length} items | Cash: ৳${cashCost.toLocaleString()})`, 44, 143);
+
+      let currentY = 175;
+
+      // Table Header Row
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(30, currentY, width - 60, 26);
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('TIME', 42, currentY + 17);
+      ctx.fillText('TITLE / DESCRIPTION', 140, currentY + 17);
+      ctx.fillText('CATEGORY', 420, currentY + 17);
+      ctx.fillText('PAYMENT', 570, currentY + 17);
+      ctx.textAlign = 'right';
+      ctx.fillText('AMOUNT (BDT)', width - 42, currentY + 17);
+
+      currentY += 26;
+
+      records.forEach((e, index) => {
+        const rowHeight = 32;
+        ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
+        ctx.fillRect(30, currentY, width - 60, rowHeight);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.strokeRect(30, currentY, width - 60, rowHeight);
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#64748b';
+        ctx.font = '10px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(e.timeStr || '--:--', 42, currentY + 20);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+        const displayTitle = (e.title || '').length > 35 ? (e.title || '').substring(0, 33) + '...' : (e.title || '');
+        ctx.fillText(displayTitle, 140, currentY + 20);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '10px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(e.category || 'Raw Materials', 420, currentY + 20);
+        ctx.fillText(e.paymentMethod || 'Cash Drawer', 570, currentY + 20);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#e11d48';
+        ctx.font = 'bold 11px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`৳${e.amount || 0}`, width - 42, currentY + 20);
+
+        currentY += rowHeight;
+      });
+
+      currentY += 30;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('Generated automatically by CRAVES POS Terminal • Mirpur 10, Dhaka', width / 2, currentY);
+
+      const link = document.createElement('a');
+      link.download = `CRAVES_Expenses_${fileTag}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      showToast('Expense Report PNG downloaded!');
+    }
+
+    /* =========================================================================
        15. KITCHEN DISPLAY (KDS)
        ========================================================================= */
     function renderKDS() {
@@ -4087,35 +4293,158 @@
       const ctx = canvas.getContext('2d');
 
       const width = 800;
-      let totalCalculatedHeight = 280 + (pOrders.length * 36) + (pExpenses.length * 30) + 100;
+      let totalCalculatedHeight = 320 + (pOrders.length * 36) + (pExpenses.length * 30) + 160;
 
       canvas.width = width;
       canvas.height = totalCalculatedHeight;
 
+      // Background
       ctx.fillStyle = '#f8fafc';
       ctx.fillRect(0, 0, width, totalCalculatedHeight);
 
+      // Header Banner
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, width, 100);
-
+      ctx.fillRect(0, 0, width, 110);
       ctx.fillStyle = '#e11d48';
-      ctx.fillRect(0, 0, width, 5);
+      ctx.fillRect(0, 0, width, 6);
 
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'left';
-      ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('CRAVES • ক্রেভ্স', 30, 42);
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('CRAVES • ক্রেভ্স — Sales & Expense Report', 30, 45);
 
-      ctx.font = '13px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '12px sans-serif';
       ctx.fillStyle = '#94a3b8';
-      ctx.fillText('House 8, Road 4, Block C, Mirpur 10 • Hotline: +8801540340852', 30, 65);
+            // Format readable timeline description
+      let readablePeriod = 'Today';
+      if (currentReportPeriod === 'today') {
+        readablePeriod = `Today (${new Date().toLocaleDateString('en-GB')})`;
+      } else if (currentReportPeriod === 'range') {
+        const start = selectedStartDate ? selectedStartDate.split('-').reverse().join('/') : '';
+        const end = selectedEndDate ? selectedEndDate.split('-').reverse().join('/') : '';
+        readablePeriod = `Range: ${start} to ${end}`;
+      } else if (currentReportPeriod === 'month') {
+        const nowDt = new Date();
+        readablePeriod = `This Month (${nowDt.toLocaleString('en-US', { month: 'long', year: 'numeric' })})`;
+      } else if (currentReportPeriod === 'custom') {
+        if (selectedCustomMonth) {
+          const [yr, mo] = selectedCustomMonth.split('-');
+          const customDt = new Date(parseInt(yr), parseInt(mo) - 1, 1);
+          readablePeriod = `Month: ${customDt.toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
+        } else {
+          readablePeriod = 'Picked Month';
+        }
+      } else if (currentReportPeriod === 'all') {
+        readablePeriod = 'All-Time';
+      }
+
+      ctx.fillText(`Timeline: ${readablePeriod} | Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, 30, 75);
+
+      // KPI Summary Section
+      const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
+      const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+      const netProfit = totalRev - totalExp;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      ctx.fillRect(30, 130, 225, 75);
+      ctx.strokeRect(30, 130, 225, 75);
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(30, 130, 4, 75);
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('PERIOD REVENUE', 44, 150);
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(`৳${totalRev.toLocaleString()}`, 44, 185);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(285, 130, 225, 75);
+      ctx.strokeRect(285, 130, 225, 75);
+      ctx.fillStyle = '#e11d48';
+      ctx.fillRect(285, 130, 4, 75);
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('PERIOD EXPENSES', 299, 150);
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(`৳${totalExp.toLocaleString()}`, 299, 185);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(540, 130, 230, 75);
+      ctx.strokeRect(540, 130, 230, 75);
+      ctx.fillStyle = '#4f46e5';
+      ctx.fillRect(540, 130, 4, 75);
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('NET PROFIT / BALANCE', 554, 150);
+      ctx.fillStyle = netProfit >= 0 ? '#4f46e5' : '#e11d48';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(`৳${netProfit.toLocaleString()}`, 554, 185);
+
+      let currentY = 230;
+
+      // Orders Section Header
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText(`Orders Summary (${pOrders.length} records)`, 30, currentY);
+      currentY += 15;
+
+      // Table Header
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(30, currentY, width - 60, 26);
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('TOKEN', 42, currentY + 17);
+      ctx.fillText('TIME & CHANNEL', 105, currentY + 17);
+      ctx.fillText('CUSTOMER', 260, currentY + 17);
+      ctx.fillText('PAYMENT', 400, currentY + 17);
+      ctx.textAlign = 'right';
+      ctx.fillText('TOTAL (BDT)', width - 42, currentY + 17);
+      ctx.textAlign = 'left';
+
+      currentY += 26;
+
+      pOrders.forEach((o, index) => {
+        const rowHeight = 32;
+        ctx.fillStyle = index % 2 === 0 ? '#ffffff' : '#f1f5f9';
+        ctx.fillRect(30, currentY, width - 60, rowHeight);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.strokeRect(30, currentY, width - 60, rowHeight);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(`#${o.token}`, 42, currentY + 20);
+
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(`${o.timeStr} (${o.channel})`, 105, currentY + 20);
+        ctx.fillText(o.customer || 'Walk-in', 260, currentY + 20);
+        ctx.fillText(o.payment, 400, currentY + 20);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(`৳${o.total}`, width - 42, currentY + 20);
+        ctx.textAlign = 'left';
+
+        currentY += rowHeight;
+      });
+
+      currentY += 30;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('CRAVES • ক্রেভ্স Online POS System • Mirpur 10, Dhaka', width / 2, currentY);
 
       const link = document.createElement('a');
-      link.download = `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.png`;
+      const periodFileTag = currentReportPeriod === 'range' ? `${selectedStartDate}_to_${selectedEndDate}` : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod);
+      link.download = `CRAVES_Report_${periodFileTag}_${new Date().toISOString().split('T')[0]}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
 
-      showToast('High-Res Full Report PNG Downloaded!');
+      showToast('Full Report PNG Downloaded!');
     }
 
     function downloadActiveReceiptPNG() {
@@ -4130,8 +4459,8 @@
       const canvas = document.getElementById('hidden-receipt-canvas');
       const ctx = canvas.getContext('2d');
 
-      const width = 384;
-      let calculatedHeight = 350 + (order.items.length * 40);
+      const width = 400;
+      let calculatedHeight = 360 + (order.items.length * 35);
 
       canvas.width = width;
       canvas.height = calculatedHeight;
@@ -4142,8 +4471,96 @@
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
 
-      ctx.font = 'bold 18px Courier, monospace';
+      ctx.font = 'bold 16px Courier, monospace';
       ctx.fillText('CRAVES • ক্রেভ্স', width / 2, 30);
+      ctx.font = '11px Courier, monospace';
+      ctx.fillText('House 8, Road 4, Block C, Mirpur 10', width / 2, 48);
+      ctx.fillText('Hotline: +8801540340852', width / 2, 64);
+
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.moveTo(20, 78);
+      ctx.lineTo(width - 20, 78);
+      ctx.stroke();
+
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 13px Courier, monospace';
+      ctx.fillText(`TOKEN: #${order.token}`, 25, 98);
+      ctx.textAlign = 'right';
+      ctx.fillText(order.channel, width - 25, 98);
+
+      ctx.textAlign = 'left';
+      ctx.font = '11px Courier, monospace';
+      ctx.fillText(`Table: ${order.table}`, 25, 116);
+      ctx.textAlign = 'right';
+      ctx.fillText(order.timeStr, width - 25, 116);
+
+      ctx.textAlign = 'left';
+      ctx.fillText(`Cust: ${order.customer || 'Walk-in'}`, 25, 134);
+      ctx.textAlign = 'right';
+      ctx.fillText(order.dateStr, width - 25, 134);
+
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.moveTo(20, 148);
+      ctx.lineTo(width - 20, 148);
+      ctx.stroke();
+
+      // Items Table Header
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 11px Courier, monospace';
+      ctx.fillText('ITEM', 25, 168);
+      ctx.fillText('QTY', width - 110, 168);
+      ctx.textAlign = 'right';
+      ctx.fillText('BDT', width - 25, 168);
+
+      let currentY = 188;
+      order.items.forEach(item => {
+        ctx.textAlign = 'left';
+        ctx.font = '11px Courier, monospace';
+        ctx.fillText(item.name.length > 22 ? item.name.substring(0, 20) + '..' : item.name, 25, currentY);
+        ctx.textAlign = 'left';
+        ctx.fillText(item.qty.toString(), width - 110, currentY);
+        ctx.textAlign = 'right';
+        ctx.fillText(`৳${item.unitPrice * item.qty}`, width - 25, currentY);
+        currentY += 22;
+      });
+
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.moveTo(20, currentY + 5);
+      ctx.lineTo(width - 20, currentY + 5);
+      ctx.stroke();
+
+      currentY += 25;
+      ctx.textAlign = 'left';
+      ctx.font = '11px Courier, monospace';
+      ctx.fillText('Subtotal:', 25, currentY);
+      ctx.textAlign = 'right';
+      ctx.fillText(`৳${order.subtotal}`, width - 25, currentY);
+
+      if (order.discount > 0) {
+        currentY += 20;
+        ctx.textAlign = 'left';
+        ctx.fillText('Discount:', 25, currentY);
+        ctx.textAlign = 'right';
+        ctx.fillText(`-৳${order.discount}`, width - 25, currentY);
+      }
+
+      currentY += 25;
+      ctx.textAlign = 'left';
+      ctx.font = 'bold 14px Courier, monospace';
+      ctx.fillText('TOTAL:', 25, currentY);
+      ctx.textAlign = 'right';
+      ctx.fillText(`৳${order.total}`, width - 25, currentY);
+
+      currentY += 35;
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 11px Courier, monospace';
+      ctx.fillText('THANK YOU FOR YOUR CRAVING!', width / 2, currentY);
+      currentY += 16;
+      ctx.font = '10px Courier, monospace';
+      ctx.fillText('POS by CRAVES Mirpur 10', width / 2, currentY);
 
       const link = document.createElement('a');
       link.download = `CRAVES_Receipt_Token_${order.token}.png`;
@@ -4163,7 +4580,28 @@
       }
 
       let csv = '\uFEFF';
-      csv += `--- CRAVES REPORT (${currentReportPeriod.toUpperCase()}) ---\n`;
+      let readablePeriod = 'Today';
+      if (currentReportPeriod === 'today') {
+        readablePeriod = `Today (${new Date().toLocaleDateString('en-GB')})`;
+      } else if (currentReportPeriod === 'range') {
+        const start = selectedStartDate ? selectedStartDate.split('-').reverse().join('/') : '';
+        const end = selectedEndDate ? selectedEndDate.split('-').reverse().join('/') : '';
+        readablePeriod = `Range: ${start} to ${end}`;
+      } else if (currentReportPeriod === 'month') {
+        const nowDt = new Date();
+        readablePeriod = `This Month (${nowDt.toLocaleString('en-US', { month: 'long', year: 'numeric' })})`;
+      } else if (currentReportPeriod === 'custom') {
+        if (selectedCustomMonth) {
+          const [yr, mo] = selectedCustomMonth.split('-');
+          const customDt = new Date(parseInt(yr), parseInt(mo) - 1, 1);
+          readablePeriod = `Month: ${customDt.toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
+        } else {
+          readablePeriod = 'Picked Month';
+        }
+      } else if (currentReportPeriod === 'all') {
+        readablePeriod = 'All-Time';
+      }
+      csv += `--- CRAVES REPORT (${readablePeriod}) ---\n`;
       csv += 'Token,Date,Time,Channel,Table,Customer,Items,Subtotal,Discount,Total,Payment,Status\n';
 
       pOrders.forEach(o => {
@@ -4175,13 +4613,377 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `CRAVES_Report_${currentReportPeriod}_${new Date().toISOString().split('T')[0]}.csv`);
+      const periodFileTag = currentReportPeriod === 'range' ? `${selectedStartDate}_to_${selectedEndDate}` : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod);
+      link.setAttribute('download', `CRAVES_Report_${periodFileTag}_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       showToast('CSV Report Downloaded!');
     }
+  
+    /* =========================================================================
+       19B. PROFESSIONAL PDF REPORT ENGINE (html2pdf)
+       ========================================================================= */
+    function getReadablePeriodLabel() {
+      let readablePeriod = 'Today';
+      if (currentReportPeriod === 'today') {
+        readablePeriod = `Today (${new Date().toLocaleDateString('en-GB')})`;
+      } else if (currentReportPeriod === 'range') {
+        const start = selectedStartDate ? selectedStartDate.split('-').reverse().join('/') : '';
+        const end = selectedEndDate ? selectedEndDate.split('-').reverse().join('/') : '';
+        readablePeriod = `Range: ${start} to ${end}`;
+      } else if (currentReportPeriod === 'month') {
+        const nowDt = new Date();
+        readablePeriod = `This Month (${nowDt.toLocaleString('en-US', { month: 'long', year: 'numeric' })})`;
+      } else if (currentReportPeriod === 'custom') {
+        if (selectedCustomMonth) {
+          const [yr, mo] = selectedCustomMonth.split('-');
+          const customDt = new Date(parseInt(yr), parseInt(mo) - 1, 1);
+          readablePeriod = `Month: ${customDt.toLocaleString('en-US', { month: 'long', year: 'numeric' })}`;
+        } else {
+          readablePeriod = 'Picked Month';
+        }
+      } else if (currentReportPeriod === 'all') {
+        readablePeriod = 'All-Time';
+      }
+      return readablePeriod;
+    }
+
+    async function downloadFullDayReportPDF() {
+      const pOrders = getPeriodFilteredOrders();
+      const pExpenses = getPeriodFilteredExpenses();
+
+      if (pOrders.length === 0 && pExpenses.length === 0) {
+        showToast('No records found for this selected timeline!', 'ph-warning', true);
+        return;
+      }
+
+      showToast('Preparing PDF document...', 'ph-spinner');
+
+      const totalRev = pOrders.reduce((s, o) => s + (o.total || 0), 0);
+      const totalExp = pExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+      const netProfit = totalRev - totalExp;
+      const unsettledDueTotal = pOrders.filter(o => o.paymentStatus === 'Due').reduce((s, o) => s + (o.total || 0), 0);
+      const readableTimeline = getReadablePeriodLabel();
+
+      const itemCounts = {};
+      pOrders.forEach(o => {
+        if (o.items) {
+          o.items.forEach(it => {
+            const key = it.name + (it.variantName ? ` (${it.variantName})` : '');
+            itemCounts[key] = (itemCounts[key] || 0) + it.qty;
+          });
+        }
+      });
+      const topItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      // Create an overlay attached directly to DOM at (0,0) to prevent clipping
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(2px); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto; padding: 20px;';
+      
+      const statusNotice = document.createElement('div');
+      statusNotice.style.cssText = 'background: #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px solid #334155;';
+      statusNotice.innerHTML = '📄 Rendering PDF... Please wait a moment';
+      overlay.appendChild(statusNotice);
+
+      const paper = document.createElement('div');
+      paper.style.cssText = 'width: 740px; background: #ffffff; color: #0f172a; padding: 32px 36px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); font-family: "Plus Jakarta Sans", sans-serif; box-sizing: border-box;';
+      overlay.appendChild(paper);
+
+      paper.innerHTML = `
+        <!-- HEADER -->
+        <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px;">CRAVES</span>
+              <span style="font-size: 15px; font-weight: 800; color: #e11d48; background: #fff1f2; padding: 2px 8px; border-radius: 6px;">ক্রেভ্স</span>
+            </div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500;">House 8, Road 4, Block C, Mirpur 10, Dhaka</div>
+            <div style="font-size: 10px; color: #64748b; font-weight: 700;">Hotline: +8801540340852</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Sales & Financial Report</div>
+            <div style="font-size: 11px; font-weight: 800; color: #e11d48; margin-top: 3px;">Timeline: ${readableTimeline}</div>
+            <div style="font-size: 9.5px; color: #94a3b8; margin-top: 2px;">Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+          </div>
+        </div>
+
+        <!-- 4 STAT BOXES -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #10b981; padding: 10px; border-radius: 8px;">
+            <div style="font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase;">Total Revenue</div>
+            <div style="font-size: 18px; font-weight: 900; color: #059669; margin-top: 3px;">৳${totalRev.toLocaleString()}</div>
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">${pOrders.length} orders total</div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #f43f5e; padding: 10px; border-radius: 8px;">
+            <div style="font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase;">Total Expenses</div>
+            <div style="font-size: 18px; font-weight: 900; color: #e11d48; margin-top: 3px;">৳${totalExp.toLocaleString()}</div>
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">${pExpenses.length} expense items</div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid ${netProfit >= 0 ? '#4f46e5' : '#dc2626'}; padding: 10px; border-radius: 8px;">
+            <div style="font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase;">Net Profit / Balance</div>
+            <div style="font-size: 18px; font-weight: 900; color: ${netProfit >= 0 ? '#4f46e5' : '#dc2626'}; margin-top: 3px;">৳${netProfit.toLocaleString()}</div>
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">After all costs</div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #d97706; padding: 10px; border-radius: 8px;">
+            <div style="font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase;">Unsettled Due</div>
+            <div style="font-size: 18px; font-weight: 900; color: #d97706; margin-top: 3px;">৳${unsettledDueTotal.toLocaleString()}</div>
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">To be collected</div>
+          </div>
+        </div>
+
+        ${topItems.length > 0 ? `
+          <!-- FAST MOVING ITEMS -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Top 5 Fast-Moving Items</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              ${topItems.map(([name, qty], idx) => `
+                <div style="background: #fff1f2; border: 1px solid #fecdd3; padding: 5px 12px; border-radius: 6px; font-size: 10.5px;">
+                  <span style="font-weight: 800; color: #9f1239;">#${idx + 1} ${name}</span>
+                  <span style="font-weight: 900; color: #e11d48; margin-left: 4px;">(${qty} sold)</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- ORDERS TABLE -->
+        <div style="margin-bottom: 22px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Orders Summary (${pOrders.length} records)</span>
+            <span style="font-size: 9.5px; color: #64748b; font-weight: 600;">Total Revenue: ৳${totalRev.toLocaleString()}</span>
+          </div>
+          <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9.5px;">
+            <colgroup>
+              <col style="width: 11%;">
+              <col style="width: 18%;">
+              <col style="width: 21%;">
+              <col style="width: 31%;">
+              <col style="width: 9%;">
+              <col style="width: 10%;">
+            </colgroup>
+            <thead>
+              <tr style="background: #f1f5f9; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; text-align: left;">
+                <th style="padding: 6px; font-weight: 800; color: #334155;">Token</th>
+                <th style="padding: 6px; font-weight: 800; color: #334155;">Date & Time</th>
+                <th style="padding: 6px; font-weight: 800; color: #334155;">Customer</th>
+                <th style="padding: 6px; font-weight: 800; color: #334155;">Items</th>
+                <th style="padding: 6px; font-weight: 800; color: #334155;">Payment</th>
+                <th style="padding: 6px; font-weight: 800; color: #334155; text-align: right; white-space: nowrap;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pOrders.length === 0 ? `
+                <tr><td colspan="6" style="padding: 12px; text-align: center; color: #94a3b8;">No orders found for this period.</td></tr>
+              ` : pOrders.map((o, idx) => {
+                const itemsStr = (o.items || []).map(i => `${i.qty}x ${i.name}`).join(', ');
+                return `
+                  <tr style="border-bottom: 1px solid #f1f5f9; background: ${idx % 2 === 0 ? '#ffffff' : '#fafafa'};">
+                    <td style="padding: 5px 6px; font-weight: 800; color: #0f172a;">#${o.token}</td>
+                    <td style="padding: 5px 6px; color: #64748b;">${o.dateStr} ${o.timeStr}</td>
+                    <td style="padding: 5px 6px; color: #334155; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${o.channel} • ${o.customer || 'Walk-in'}</td>
+                    <td style="padding: 5px 6px; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${itemsStr}</td>
+                    <td style="padding: 5px 6px; font-weight: 700; color: ${o.paymentStatus === 'Due' ? '#d97706' : '#059669'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${o.payment}</td>
+                    <td style="padding: 5px 6px; font-weight: 900; color: #e11d48; text-align: right; white-space: nowrap;">৳${o.total}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        ${pExpenses.length > 0 ? `
+          <!-- EXPENSES TABLE -->
+          <div style="margin-bottom: 22px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">Expenses Breakdown (${pExpenses.length} items)</span>
+              <span style="font-size: 9.5px; color: #64748b; font-weight: 600;">Total: ৳${totalExp.toLocaleString()}</span>
+            </div>
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9.5px;">
+              <colgroup>
+                <col style="width: 22%;">
+                <col style="width: 35%;">
+                <col style="width: 17%;">
+                <col style="width: 14%;">
+                <col style="width: 12%;">
+              </colgroup>
+              <thead>
+                <tr style="background: #f1f5f9; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; text-align: left;">
+                  <th style="padding: 6px; font-weight: 800; color: #334155;">Date & Time</th>
+                  <th style="padding: 6px; font-weight: 800; color: #334155;">Title / Item</th>
+                  <th style="padding: 6px; font-weight: 800; color: #334155;">Category</th>
+                  <th style="padding: 6px; font-weight: 800; color: #334155;">Paid From</th>
+                  <th style="padding: 6px; font-weight: 800; color: #334155; text-align: right; white-space: nowrap;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${pExpenses.map((e, idx) => `
+                  <tr style="border-bottom: 1px solid #f1f5f9; background: ${idx % 2 === 0 ? '#ffffff' : '#fafafa'};">
+                    <td style="padding: 5px 6px; color: #64748b;">${e.dateStr || ''} ${e.timeStr || ''}</td>
+                    <td style="padding: 5px 6px; font-weight: 700; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${e.title || ''}</td>
+                    <td style="padding: 5px 6px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${e.category || ''}</td>
+                    <td style="padding: 5px 6px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${e.paymentMethod || ''}</td>
+                    <td style="padding: 5px 6px; font-weight: 900; color: #e11d48; text-align: right; white-space: nowrap;">৳${e.amount}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : ''}
+
+        <!-- FOOTER -->
+        <div style="border-top: 1px dashed #cbd5e1; padding-top: 14px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #94a3b8;">
+          <div>CRAVES Management System • Mirpur 10, Dhaka</div>
+          <div style="font-weight: 700; color: #64748b;">Official Store Financial Statement</div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      const periodFileTag = currentReportPeriod === 'range' ? `${selectedStartDate}_to_${selectedEndDate}` : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod);
+      const opt = {
+        margin: [6, 6, 6, 6],
+        filename: `CRAVES_Sales_Report_${periodFileTag}_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      try {
+        await html2pdf().set(opt).from(paper).save();
+        showToast('Sales Report PDF downloaded successfully!');
+      } catch (err) {
+        console.error('PDF generation error:', err);
+        showToast('Failed to generate PDF.', 'ph-warning', true);
+      } finally {
+        overlay.remove();
+      }
+    }
+
+    async function downloadExpensePDF() {
+      const { label, fileTag, records } = getActiveFilteredExpenses();
+
+      if (!records || records.length === 0) {
+        showToast('No expenses found to export for this period!', 'ph-warning', true);
+        return;
+      }
+
+      showToast('Preparing Expense PDF...', 'ph-spinner');
+
+      const totalCost = records.reduce((s, e) => s + (e.amount || 0), 0);
+      const cashCost = records.filter(e => e.paymentMethod === 'Cash Drawer').reduce((s, e) => s + (e.amount || 0), 0);
+      const mfsCost = records.filter(e => e.paymentMethod === 'bKash / Nagad').reduce((s, e) => s + (e.amount || 0), 0);
+
+      // Create an overlay attached directly to DOM at (0,0) to prevent clipping
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(2px); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto; padding: 20px;';
+      
+      const statusNotice = document.createElement('div');
+      statusNotice.style.cssText = 'background: #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 9999px; font-size: 12px; font-weight: 700; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px solid #334155;';
+      statusNotice.innerHTML = '📄 Rendering Expense PDF... Please wait a moment';
+      overlay.appendChild(statusNotice);
+
+      const paper = document.createElement('div');
+      paper.style.cssText = 'width: 740px; background: #ffffff; color: #0f172a; padding: 32px 36px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); font-family: "Plus Jakarta Sans", sans-serif; box-sizing: border-box;';
+      overlay.appendChild(paper);
+
+      paper.innerHTML = `
+        <!-- HEADER -->
+        <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px;">CRAVES</span>
+              <span style="font-size: 15px; font-weight: 800; color: #e11d48; background: #fff1f2; padding: 2px 8px; border-radius: 6px;">ক্রেভ্স</span>
+            </div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500;">House 8, Road 4, Block C, Mirpur 10, Dhaka</div>
+            <div style="font-size: 10px; color: #64748b; font-weight: 700;">Hotline: +8801540340852</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 13px; font-weight: 800; color: #e11d48; text-transform: uppercase; letter-spacing: 0.5px;">Expense Ledger Report</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-top: 3px;">Period: ${label}</div>
+            <div style="font-size: 9.5px; color: #94a3b8; margin-top: 2px;">Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+          </div>
+        </div>
+
+        <!-- 3 SUMMARY TILES -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px;">
+          <div style="background: #fff1f2; border: 1px solid #fecdd3; border-left: 4px solid #e11d48; padding: 12px; border-radius: 8px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #9f1239; text-transform: uppercase;">Total Expenses</div>
+            <div style="font-size: 19px; font-weight: 900; color: #e11d48; margin-top: 3px;">৳${totalCost.toLocaleString()}</div>
+            <div style="font-size: 9px; color: #9f1239; margin-top: 2px;">${records.length} items logged</div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0f172a; padding: 12px; border-radius: 8px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #64748b; text-transform: uppercase;">Cash Drawer Paid</div>
+            <div style="font-size: 19px; font-weight: 900; color: #0f172a; margin-top: 3px;">৳${cashCost.toLocaleString()}</div>
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">Direct cash out</div>
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #4f46e5; padding: 12px; border-radius: 8px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #64748b; text-transform: uppercase;">bKash / Nagad Paid</div>
+            <div style="font-size: 19px; font-weight: 900; color: #4f46e5; margin-top: 3px;">৳${mfsCost.toLocaleString()}</div>
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">Digital transfer</div>
+          </div>
+        </div>
+
+        <!-- EXPENSES TABLE WITH LOCKED COLUMNS -->
+        <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9.5px; margin-bottom: 22px;">
+          <colgroup>
+            <col style="width: 22%;">
+            <col style="width: 36%;">
+            <col style="width: 16%;">
+            <col style="width: 13%;">
+            <col style="width: 13%;">
+          </colgroup>
+          <thead>
+            <tr style="background: #f1f5f9; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; text-align: left;">
+              <th style="padding: 6px; font-weight: 800; color: #334155;">Time & Date</th>
+              <th style="padding: 6px; font-weight: 800; color: #334155;">Expense Title</th>
+              <th style="padding: 6px; font-weight: 800; color: #334155;">Category</th>
+              <th style="padding: 6px; font-weight: 800; color: #334155;">Paid From</th>
+              <th style="padding: 6px; font-weight: 800; color: #334155; text-align: right; white-space: nowrap;">Amount (BDT)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${records.map((e, idx) => `
+              <tr style="border-bottom: 1px solid #f1f5f9; background: ${idx % 2 === 0 ? '#ffffff' : '#fafafa'};">
+                <td style="padding: 5px 6px; color: #64748b;">${e.dateStr || ''} ${e.timeStr || ''}</td>
+                <td style="padding: 5px 6px; font-weight: 700; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${e.title || ''}</td>
+                <td style="padding: 5px 6px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${e.category || ''}</td>
+                <td style="padding: 5px 6px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${e.paymentMethod || ''}</td>
+                <td style="padding: 5px 6px; font-weight: 900; color: #e11d48; text-align: right; white-space: nowrap;">৳${e.amount}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <!-- FOOTER -->
+        <div style="border-top: 1px dashed #cbd5e1; padding-top: 14px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #94a3b8;">
+          <div>CRAVES Mirpur 10 • Internal Expense Ledger</div>
+          <div style="font-weight: 700; color: #64748b;">Total Expenses: ৳${totalCost.toLocaleString()}</div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      const opt = {
+        margin: [6, 6, 6, 6],
+        filename: `CRAVES_Expense_Report_${fileTag}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      try {
+        await html2pdf().set(opt).from(paper).save();
+        showToast('Expense PDF downloaded successfully!');
+      } catch (err) {
+        console.error('Expense PDF error:', err);
+        showToast('Failed to generate Expense PDF.', 'ph-warning', true);
+      } finally {
+        overlay.remove();
+      }
+    }
+
   </script>
 </body>
 </html>

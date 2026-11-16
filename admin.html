@@ -831,11 +831,17 @@
           <span class="text-xs font-extrabold text-slate-900">Timeline:</span>
           <div class="inline-flex p-0.5 bg-slate-100 rounded-xl text-xs font-bold flex-wrap gap-0.5">
             <button onclick="setReportPeriod('today')" id="period-btn-today" class="px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition">Today</button>
+            <button onclick="setReportPeriod('date')" id="period-btn-date" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">Pick Date</button>
             <button onclick="setReportPeriod('range')" id="period-btn-range" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">Date Range</button>
             <button onclick="setReportPeriod('month')" id="period-btn-month" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">This Month</button>
             <button onclick="setReportPeriod('custom')" id="period-btn-custom" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">Pick Month</button>
             <button onclick="setReportPeriod('all')" id="period-btn-all" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition font-extrabold">All-Time</button>
           </div>
+        </div>
+
+        <div id="single-date-container" class="flex items-center gap-1.5" style="display: none;">
+          <label class="text-[11px] font-bold text-slate-500">Date:</label>
+          <input type="date" id="report-single-date-input" onchange="onSingleDateChange()" class="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:border-rose-500" />
         </div>
 
         <div id="date-range-container" class="flex items-center gap-1.5 flex-wrap" style="display: none;">
@@ -1559,6 +1565,7 @@
 
     // Report Period State
     let currentReportPeriod = 'today';
+    let selectedSingleDate = '';
     let selectedStartDate = ''; 
     let selectedEndDate = '';   
     let selectedCustomMonth = '';
@@ -1642,10 +1649,12 @@
       const todayISO = now.toISOString().split('T')[0];
       const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+      selectedSingleDate = todayISO;
       selectedStartDate = todayISO;
       selectedEndDate = todayISO;
       selectedCustomMonth = monthStr;
 
+      const singleDateInput = document.getElementById('report-single-date-input');
       const startInput = document.getElementById('report-date-start');
       const endInput = document.getElementById('report-date-end');
       const monthInput = document.getElementById('report-month-input');
@@ -1654,6 +1663,7 @@
       const expMonthInput = document.getElementById('expense-view-month');
       const buyDateInput = document.getElementById('buying-date-input');
 
+      if (singleDateInput) singleDateInput.value = todayISO;
       if (startInput) startInput.value = todayISO;
       if (endInput) endInput.value = todayISO;
       if (monthInput) monthInput.value = monthStr;
@@ -3859,23 +3869,29 @@
       currentReportPeriod = period;
       
       const btnToday = document.getElementById('period-btn-today');
+      const btnDate = document.getElementById('period-btn-date');
       const btnRange = document.getElementById('period-btn-range');
       const btnMonth = document.getElementById('period-btn-month');
       const btnCustom = document.getElementById('period-btn-custom');
       const btnAll = document.getElementById('period-btn-all');
 
+      const singleDateBox = document.getElementById('single-date-container');
       const rangeBox = document.getElementById('date-range-container');
       const monthBox = document.getElementById('custom-month-container');
 
-      [btnToday, btnRange, btnMonth, btnCustom, btnAll].forEach(b => {
+      [btnToday, btnDate, btnRange, btnMonth, btnCustom, btnAll].forEach(b => {
         if (b) b.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
       });
 
+      singleDateBox.style.display = 'none';
       rangeBox.style.display = 'none';
       monthBox.style.display = 'none';
 
       if (period === 'today') {
         btnToday.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
+      } else if (period === 'date') {
+        btnDate.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
+        singleDateBox.style.display = 'flex';
       } else if (period === 'range') {
         btnRange.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
         rangeBox.style.display = 'flex';
@@ -3888,6 +3904,12 @@
         btnAll.className = 'px-2.5 py-1 rounded-lg bg-white text-rose-600 shadow-xs transition font-extrabold';
       }
 
+      updateReportsKPIs();
+      filterOrdersTable();
+    }
+
+    function onSingleDateChange() {
+      selectedSingleDate = document.getElementById('report-single-date-input').value;
       updateReportsKPIs();
       filterOrdersTable();
     }
@@ -3929,6 +3951,9 @@
 
       if (currentReportPeriod === 'today') {
         return record.dateStr === todayStr;
+      } else if (currentReportPeriod === 'date') {
+        if (!selectedSingleDate) return true;
+        return recYYYYMMDD === selectedSingleDate;
       } else if (currentReportPeriod === 'range') {
         if (!selectedStartDate || !selectedEndDate) return true;
         return recYYYYMMDD >= selectedStartDate && recYYYYMMDD <= selectedEndDate;
@@ -3966,6 +3991,10 @@
       if (currentReportPeriod === 'today') {
         labelRev.innerText = "Today's Revenue";
         labelExp.innerText = "Today's Expenses";
+      } else if (currentReportPeriod === 'date') {
+        const formattedSingle = selectedSingleDate ? selectedSingleDate.split('-').reverse().join('/') : '';
+        labelRev.innerText = `Revenue (${formattedSingle})`;
+        labelExp.innerText = `Expenses (${formattedSingle})`;
       } else if (currentReportPeriod === 'range') {
         labelRev.innerText = `Revenue (${selectedStartDate} to ${selectedEndDate})`;
         labelExp.innerText = `Expenses (${selectedStartDate} to ${selectedEndDate})`;
@@ -4043,17 +4072,24 @@
         if (comparisonTitleLabel) {
           comparisonTitleLabel.innerHTML = `<i class="ph ph-chart-line-up text-emerald-500 text-base"></i> Comparison vs Last Day`;
         }
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayISO = yesterday.toISOString().split('T')[0];
-        const yesterdayStr = yesterday.toLocaleDateString('en-GB');
+        const baseDate = (currentReportPeriod === 'date' && selectedSingleDate)
+          ? new Date(selectedSingleDate + 'T12:00:00')
+          : new Date(now);
+        const prevDay = new Date(baseDate);
+        prevDay.setDate(prevDay.getDate() - 1);
+        const prevDayISO = `${prevDay.getFullYear()}-${String(prevDay.getMonth() + 1).padStart(2, '0')}-${String(prevDay.getDate()).padStart(2, '0')}`;
+        const prevDayStr = prevDay.toLocaleDateString('en-GB');
 
-        const yesterdayOrders = orderHistory.filter(o => {
-          if (o.timestamp) return o.timestamp.split('T')[0] === yesterdayISO;
-          return o.dateStr === yesterdayStr;
+        const prevDayOrders = orderHistory.filter(o => {
+          if (o.timestamp) {
+            const d = new Date(o.timestamp);
+            const dISO = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return dISO === prevDayISO;
+          }
+          return o.dateStr === prevDayStr;
         });
-        comparisonRevTarget = yesterdayOrders.reduce((s, o) => s + (o.total || 0), 0);
-        comparisonLabel = `Yesterday's revenue: ৳${comparisonRevTarget}`;
+        comparisonRevTarget = prevDayOrders.reduce((s, o) => s + (o.total || 0), 0);
+        comparisonLabel = `${currentReportPeriod === 'date' ? 'Day before selected date' : "Yesterday's"} revenue: ৳${comparisonRevTarget}`;
       }
 
       const diff = totalRev - comparisonRevTarget;
@@ -4315,10 +4351,13 @@
 
       ctx.font = '12px sans-serif';
       ctx.fillStyle = '#94a3b8';
-            // Format readable timeline description
+      // Format readable timeline description
       let readablePeriod = 'Today';
       if (currentReportPeriod === 'today') {
         readablePeriod = `Today (${new Date().toLocaleDateString('en-GB')})`;
+      } else if (currentReportPeriod === 'date') {
+        const picked = selectedSingleDate ? selectedSingleDate.split('-').reverse().join('/') : '';
+        readablePeriod = `Date: ${picked}`;
       } else if (currentReportPeriod === 'range') {
         const start = selectedStartDate ? selectedStartDate.split('-').reverse().join('/') : '';
         const end = selectedEndDate ? selectedEndDate.split('-').reverse().join('/') : '';
@@ -4439,7 +4478,11 @@
       ctx.fillText('CRAVES • ক্রেভ্স Online POS System • Mirpur 10, Dhaka', width / 2, currentY);
 
       const link = document.createElement('a');
-      const periodFileTag = currentReportPeriod === 'range' ? `${selectedStartDate}_to_${selectedEndDate}` : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod);
+      const periodFileTag = currentReportPeriod === 'date'
+        ? selectedSingleDate
+        : (currentReportPeriod === 'range'
+            ? `${selectedStartDate}_to_${selectedEndDate}`
+            : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod));
       link.download = `CRAVES_Report_${periodFileTag}_${new Date().toISOString().split('T')[0]}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
@@ -4583,6 +4626,9 @@
       let readablePeriod = 'Today';
       if (currentReportPeriod === 'today') {
         readablePeriod = `Today (${new Date().toLocaleDateString('en-GB')})`;
+      } else if (currentReportPeriod === 'date') {
+        const picked = selectedSingleDate ? selectedSingleDate.split('-').reverse().join('/') : '';
+        readablePeriod = `Date: ${picked}`;
       } else if (currentReportPeriod === 'range') {
         const start = selectedStartDate ? selectedStartDate.split('-').reverse().join('/') : '';
         const end = selectedEndDate ? selectedEndDate.split('-').reverse().join('/') : '';
@@ -4613,7 +4659,11 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const periodFileTag = currentReportPeriod === 'range' ? `${selectedStartDate}_to_${selectedEndDate}` : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod);
+      const periodFileTag = currentReportPeriod === 'date'
+        ? selectedSingleDate
+        : (currentReportPeriod === 'range'
+            ? `${selectedStartDate}_to_${selectedEndDate}`
+            : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod));
       link.setAttribute('download', `CRAVES_Report_${periodFileTag}_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
@@ -4629,6 +4679,9 @@
       let readablePeriod = 'Today';
       if (currentReportPeriod === 'today') {
         readablePeriod = `Today (${new Date().toLocaleDateString('en-GB')})`;
+      } else if (currentReportPeriod === 'date') {
+        const picked = selectedSingleDate ? selectedSingleDate.split('-').reverse().join('/') : '';
+        readablePeriod = `Date: ${picked}`;
       } else if (currentReportPeriod === 'range') {
         const start = selectedStartDate ? selectedStartDate.split('-').reverse().join('/') : '';
         const end = selectedEndDate ? selectedEndDate.split('-').reverse().join('/') : '';
@@ -4841,7 +4894,11 @@
 
       document.body.appendChild(overlay);
 
-      const periodFileTag = currentReportPeriod === 'range' ? `${selectedStartDate}_to_${selectedEndDate}` : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod);
+      const periodFileTag = currentReportPeriod === 'date'
+        ? selectedSingleDate
+        : (currentReportPeriod === 'range'
+            ? `${selectedStartDate}_to_${selectedEndDate}`
+            : (currentReportPeriod === 'custom' ? selectedCustomMonth : currentReportPeriod));
       const opt = {
         margin: [6, 6, 6, 6],
         filename: `CRAVES_Sales_Report_${periodFileTag}_${new Date().toISOString().split('T')[0]}.pdf`,

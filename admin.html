@@ -4108,13 +4108,7 @@
     /* =========================================================================
        18. ORDER SEARCH, DUE ADJUSTMENTS & DETAILS
        ========================================================================= */
-    // Push today's totals to Android Home Screen Widget
-if(windows.CravesWidgetBridge && typeof window.CravesWidgetBridge.updateStats === "function") {
-    window.CravesWidgetBridge.updateStats(
-        "৳" + Math.round(todaySales).toLocaleString(),
-        "৳" + Math.round(todayExpenses).toLocaleString(),
-        String(todayOrderCtodayOrderCount
-    
+
     
     function filterOrdersTable() {
       const query = (document.getElementById('order-search-input').value || '').toLowerCase().trim();

@@ -4105,6 +4105,30 @@
       }
     }
 
+    syncAndroidHomeWidget();
+    }
+
+    function syncAndroidHomeWidget() {
+      if (!window.CravesWidgetBridge || typeof window.CravesWidgetBridge.updateStats !== "function") return;
+
+      const todayStr = new Date().toLocaleDateString('en-GB');
+      const todayISO = new Date().toISOString().split('T')[0];
+
+      const todayOrders = orderHistory.filter(o => o.dateStr === todayStr);
+      const todaySalesTotal = todayOrders.reduce((s, o) => s + (o.total || 0), 0);
+
+      const todayExpensesList = expenseHistory.filter(e => (e.dateISO ? e.dateISO === todayISO : e.dateStr === todayStr));
+      const todayExpensesTotal = todayExpensesList.reduce((s, e) => s + (e.amount || 0), 0);
+
+      window.CravesWidgetBridge.updateStats(
+        "৳" + Math.round(todaySalesTotal).toLocaleString(),
+        "৳" + Math.round(todayExpensesTotal).toLocaleString(),
+        String(todayOrders.length)
+      );
+    }
+
+
+    
     /* =========================================================================
        18. ORDER SEARCH, DUE ADJUSTMENTS & DETAILS
        ========================================================================= */

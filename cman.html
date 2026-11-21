@@ -66,7 +66,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col overflow-x-hidden">
 
   <!-- ================= AUTH, FORGOT PASSWORD & ONBOARDING GATE ================= -->
   <div id="auth-screen" class="fixed inset-0 z-50 bg-slate-900 flex items-center justify-center p-4 overflow-y-auto">
@@ -98,7 +98,12 @@
                 Forgot Password?
               </button>
             </div>
-            <input type="password" id="auth-password" required minlength="6" placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white outline-hidden" />
+            <div class="relative">
+              <input type="password" id="auth-password" required minlength="6" placeholder="••••••••" class="w-full pl-3.5 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 focus:bg-white outline-hidden" />
+              <button type="button" onclick="toggleAuthPasswordVisibility()" id="btn-toggle-auth-password" aria-label="Show password" title="Show / Hide Password" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-700 transition">
+                <i id="icon-toggle-auth-password" class="ph ph-eye text-base"></i>
+              </button>
+            </div>
           </div>
 
           <div id="auth-error-msg" class="hidden p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-[11px] font-semibold"></div>
@@ -257,9 +262,13 @@
       </div>
 
       <div class="space-y-2 pt-1">
-        <a href="mailto:arafidalvi@gmail.com?subject=CafeOS%20Subscription%20Renewal" class="w-full py-3 brand-gradient text-white rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 shadow-md">
+        <button type="button" onclick="submitRenewalFromLockScreen()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition">
+          <i class="ph ph-whatsapp-logo text-lg"></i>
+          <span>Submit Renewal Request & WhatsApp</span>
+        </button>
+        <a href="mailto:arafidalvi@gmail.com?subject=CafeOS%20Subscription%20Renewal" class="w-full py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition">
           <i class="ph ph-envelope-simple text-base"></i>
-          <span>Contact Admin to Renew (arafidalvi@gmail.com)</span>
+          <span>Email Admin (arafidalvi@gmail.com)</span>
         </a>
         <button onclick="adminLogout()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition">
           Sign Out
@@ -269,10 +278,10 @@
   </div>
 
   <!-- ================= MAIN APP SHELL ================= -->
-  <div id="app-shell" class="hidden flex-col min-h-screen pb-20 md:pb-0">
+  <div id="app-shell" class="hidden flex-col min-h-screen w-full max-w-full overflow-x-hidden pb-20 lg:pb-0">
 
     <!-- SUPER ADMIN IMPERSONATION BANNER -->
-    <div id="superadmin-inspect-banner" class="hidden bg-indigo-950 text-white px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 border-b border-indigo-800">
+    <div id="superadmin-inspect-banner" class="hidden bg-indigo-950 text-white px-3 sm:px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 border-b border-indigo-800">
       <div class="flex items-center gap-2">
         <span class="bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded text-[10px] uppercase">Super Admin Mode</span>
         <span>Inspecting Cafe: <b id="inspecting-cafe-label">...</b></span>
@@ -283,57 +292,60 @@
     </div>
 
     <!-- TOP APP HEADER -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-      <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div id="hdr-logo-box" class="w-10 h-10 rounded-xl brand-gradient text-white font-black flex items-center justify-center text-lg shadow-sm overflow-hidden">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs w-full max-w-full">
+      <div class="w-full max-w-7xl mx-auto px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div id="hdr-logo-box" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl brand-gradient text-white font-black flex items-center justify-center text-base sm:text-lg shadow-sm overflow-hidden shrink-0">
             C
           </div>
-          <div>
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <h1 id="hdr-cafe-name" class="text-base font-extrabold text-slate-900 tracking-tight leading-none">MY CAFE</h1>
-              <span id="hdr-cafe-subtitle" class="text-xs font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded hidden"></span>
-              <span id="hdr-sub-badge" class="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200">
-                Trial
-              </span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+              <h1 id="hdr-cafe-name" class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight leading-none truncate max-w-[110px] sm:max-w-none">MY CAFE</h1>
+              <span id="hdr-cafe-subtitle" class="text-[11px] sm:text-xs font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded hidden shrink-0"></span>
+              <button type="button" id="hdr-sub-badge" onclick="openSubscriptionApplyModal()" title="Click to apply for or renew subscription via WhatsApp" class="text-[9px] sm:text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-1.5 sm:px-2 py-0.5 rounded-full border border-indigo-200 shrink-0 inline-flex items-center gap-1 cursor-pointer transition active:scale-95">
+                <span>Trial</span>
+                <i class="ph ph-caret-right text-[9px]"></i>
+              </button>
             </div>
-            <p id="hdr-cafe-address" class="text-[11px] text-slate-500 font-medium truncate max-w-[200px] sm:max-w-xs">Cafe Location</p>
+            <p id="hdr-cafe-address" class="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate mt-0.5">Cafe Location</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <button id="hdr-superadmin-btn" onclick="switchTab('superadmin')" class="hidden items-center gap-1 bg-amber-400 hover:bg-amber-300 text-slate-950 px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition shadow-xs">
-            <i class="ph ph-crown text-base"></i>
-            <span>Super Admin</span>
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+          <button id="hdr-superadmin-btn" onclick="switchTab('superadmin')" class="hidden items-center gap-1 bg-amber-400 hover:bg-amber-300 text-slate-950 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-extrabold transition shadow-xs" title="Super Admin">
+            <i class="ph ph-crown text-sm sm:text-base"></i>
+            <span class="hidden sm:inline">Super Admin</span>
+            <span id="hdr-sa-req-badge" class="hidden bg-rose-600 text-white rounded-full text-[10px] px-1.5 py-0.2 font-black">0</span>
           </button>
 
-          <button onclick="downloadPeriodCSV()" title="Export CSV" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border border-slate-200">
-            <i class="ph ph-file-csv text-base text-emerald-600"></i>
+          <button onclick="downloadPeriodCSV()" title="Export CSV" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-semibold transition border border-slate-200">
+            <i class="ph ph-file-csv text-sm sm:text-base text-emerald-600"></i>
             <span class="hidden md:inline">CSV</span>
           </button>
 
-          <button onclick="downloadFullDayReportPNG()" title="Report PNG" class="flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
-            <i class="ph ph-image text-base text-indigo-600"></i>
+          <button onclick="downloadFullDayReportPNG()" title="Report PNG" class="flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold transition">
+            <i class="ph ph-image text-sm sm:text-base text-indigo-600"></i>
             <span class="hidden md:inline">PNG</span>
           </button>
 
-          <button onclick="downloadFullDayReportPDF()" title="Report PDF" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
-            <i class="ph ph-file-pdf text-base text-rose-600"></i>
+          <button onclick="downloadFullDayReportPDF()" title="Report PDF" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold transition">
+            <i class="ph ph-file-pdf text-sm sm:text-base text-rose-600"></i>
             <span class="hidden md:inline">PDF</span>
           </button>
 
-          <button onclick="openConfirmDialog('Sign out of your account?', () => adminLogout())" title="Log out" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
-            <i class="ph ph-sign-out text-base"></i>
+          <button onclick="openConfirmDialog('Sign out of your account?', () => adminLogout())" title="Log out" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold transition">
+            <i class="ph ph-sign-out text-sm sm:text-base"></i>
             <span class="hidden md:inline">Logout</span>
           </button>
         </div>
       </div>
 
       <!-- Desktop Navigation Tabs -->
-      <div class="hidden md:flex border-t border-slate-100 px-4 bg-slate-50/60 max-w-7xl mx-auto">
+      <div class="hidden lg:flex border-t border-slate-100 px-4 bg-slate-50/60 max-w-7xl mx-auto">
         <nav class="flex gap-1 py-1 overflow-x-auto">
           <button onclick="switchTab('superadmin')" id="tab-btn-superadmin" class="tab-btn hidden px-4 py-1.5 rounded-lg text-xs font-extrabold transition items-center gap-1.5 text-amber-800 bg-amber-100/80 border border-amber-300">
             <i class="ph ph-crown text-base"></i> Super Admin
+            <span id="sa-req-badge" class="hidden bg-rose-600 text-white rounded-full text-[10px] px-1.5 py-0.2 font-black">0</span>
           </button>
           <button onclick="switchTab('pos')" id="tab-btn-pos" class="tab-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-rose-600 bg-white shadow-xs">
             <i class="ph ph-storefront text-base"></i> POS Terminal
@@ -373,7 +385,7 @@
     <!-- MAIN CONTAINER -->
     <main class="max-w-7xl mx-auto w-full p-3 sm:p-4 flex-1">
 
-      <!-- ================= VIEW 0: SUPER ADMIN DASHBOARD ================= -->
+      <!-- ================= VIEW 0: SUPER ADMIN DASHBOARD (arafidalvi@gmail.com ONLY) ================= -->
       <div id="view-superadmin" class="view-panel hidden space-y-4">
         <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl shadow-md flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-3">
@@ -382,7 +394,7 @@
             </div>
             <div>
               <h2 class="text-base font-extrabold tracking-tight">Super Admin SaaS Control Center</h2>
-              <p class="text-xs text-indigo-200">Manage all registered cafes, extend subscriptions, and inspect every cafe's live sales & data.</p>
+              <p class="text-xs text-indigo-200">Manage all registered cafes, approve extension requests, and inspect every cafe's live sales & data.</p>
             </div>
           </div>
           <button onclick="loadAllCafesForSuperAdmin()" class="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 border border-white/15">
@@ -390,7 +402,7 @@
           </button>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Cafes</span>
             <p id="sa-kpi-total-cafes" class="text-2xl font-black text-slate-900 mt-1">0</p>
@@ -400,12 +412,37 @@
             <p id="sa-kpi-active-cafes" class="text-2xl font-black text-emerald-600 mt-1">0</p>
           </div>
           <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Pending Requests</span>
+            <p id="sa-kpi-pending-reqs" class="text-2xl font-black text-amber-600 mt-1">0</p>
+          </div>
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Expired / Suspended</span>
             <p id="sa-kpi-expired-cafes" class="text-2xl font-black text-rose-600 mt-1">0</p>
           </div>
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Combined Platform Sales</span>
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Platform Sales</span>
             <p id="sa-kpi-platform-sales" class="text-2xl font-black text-indigo-600 mt-1">৳0</p>
+          </div>
+        </div>
+
+        <!-- INCOMING SUBSCRIPTION EXTENSION REQUESTS PANEL -->
+        <div id="sa-requests-panel" class="bg-amber-50/70 rounded-2xl border border-amber-200 p-4 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center text-base font-black">
+                <i class="ph ph-bell-ringing"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-slate-900 leading-none">Incoming Subscription Extension Requests</h3>
+                <p class="text-[11px] text-slate-600 mt-0.5">Review cafe upgrade/renewal requests and approve with one click</p>
+              </div>
+            </div>
+            <span id="sa-requests-count-pill" class="text-[11px] font-extrabold bg-amber-200/80 text-amber-950 px-2.5 py-1 rounded-full">0 pending</span>
+          </div>
+          <div id="sa-requests-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="col-span-full text-center text-xs text-slate-500 py-4 bg-white/80 rounded-xl border border-amber-100">
+              No pending subscription requests right now.
+            </div>
           </div>
         </div>
 
@@ -1116,9 +1153,10 @@
             <h3 class="text-sm font-extrabold text-slate-900 mt-1" id="set-plan-expiry">Valid until: ...</h3>
             <p class="text-[11px] text-slate-500" id="set-plan-days-left">30 days remaining</p>
           </div>
-          <a href="mailto:arafidalvi@gmail.com?subject=CafeOS%20Plan%20Extension" class="px-4 py-2 brand-gradient text-white rounded-xl text-xs font-extrabold shadow-xs">
-            Extend / Upgrade Plan
-          </a>
+          <button type="button" onclick="openSubscriptionApplyModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-xs inline-flex items-center gap-1.5 transition">
+            <i class="ph ph-whatsapp-logo text-base"></i>
+            <span>Apply / Renew Subscription</span>
+          </button>
         </div>
 
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
@@ -1202,11 +1240,12 @@
       </div>
     </main>
 
-    <!-- ================= MOBILE STICKY BOTTOM BAR ================= -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 px-2 py-2 flex items-center justify-between shadow-lg">
-      <div class="flex items-center gap-0.5 overflow-x-auto no-scrollbar">
-        <button onclick="switchTab('superadmin')" id="m-nav-superadmin" class="hidden px-2 py-1.5 rounded-xl text-amber-800 bg-amber-100 text-[10px] font-extrabold flex-col items-center">
+    <!-- ================= MOBILE & TABLET STICKY BOTTOM BAR ================= -->
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 px-3 py-2 flex items-center justify-between shadow-lg">
+      <div class="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+        <button onclick="switchTab('superadmin')" id="m-nav-superadmin" class="hidden px-2 py-1.5 rounded-xl text-amber-800 bg-amber-100 text-[10px] font-extrabold flex-col items-center relative">
           <i class="ph ph-crown text-base"></i><span>Admin</span>
+          <span id="m-sa-req-badge" class="hidden absolute -top-0.5 -right-0.5 bg-rose-600 text-white rounded-full text-[9px] px-1 font-black">0</span>
         </button>
         <button onclick="switchTab('pos')" id="m-nav-pos" class="px-2 py-1.5 rounded-xl text-rose-600 bg-rose-50 text-[10px] font-bold flex flex-col items-center">
           <i class="ph ph-storefront text-base"></i><span>POS</span>
@@ -1239,21 +1278,104 @@
     </div>
   </div>
 
-  <!-- ================= CUSTOM CONFIRMATION DIALOG (NO NATIVE CONFIRM) ================= -->
+  <!-- ================= APPLY / RENEW SUBSCRIPTION MODAL (WHATSAPP) ================= -->
+  <div id="modal-subscription-apply" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3" style="display: none;">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 border border-slate-200 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl">
+            <i class="ph ph-whatsapp-logo"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900 leading-none">Apply / Renew Subscription</h3>
+            <span class="text-[11px] text-slate-500">Send your cafe details on WhatsApp for instant activation</span>
+          </div>
+        </div>
+        <button type="button" onclick="closeSubscriptionApplyModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+          <i class="ph ph-x text-base"></i>
+        </button>
+      </div>
+
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1.5">
+        <div class="flex justify-between">
+          <span class="text-slate-500">Cafe Name:</span>
+          <span id="sub-modal-cafe" class="font-extrabold text-slate-900">...</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Owner Email:</span>
+          <span id="sub-modal-email" class="font-bold text-slate-800">...</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Current Status:</span>
+          <span id="sub-modal-status" class="font-bold text-indigo-600">...</span>
+        </div>
+      </div>
+
+      <div class="space-y-1.5 text-xs">
+        <label class="block font-bold text-slate-700">Choose Subscription Plan:</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="selectSubscriptionPlanOption('Monthly Subscription (30 Days)')" id="sub-opt-monthly" class="p-3 rounded-xl border-2 border-emerald-600 bg-emerald-50/70 text-left transition">
+            <span class="text-[10px] font-extrabold uppercase text-emerald-700 block">Most Popular</span>
+            <span class="text-xs font-black text-slate-900 block mt-0.5">Monthly Plan</span>
+            <span class="text-[11px] text-slate-600">30 Days Extension</span>
+          </button>
+          <button type="button" onclick="selectSubscriptionPlanOption('Yearly Subscription (365 Days)')" id="sub-opt-yearly" class="p-3 rounded-xl border border-slate-200 hover:border-slate-300 text-left transition">
+            <span class="text-[10px] font-extrabold uppercase text-indigo-600 block">Best Value</span>
+            <span class="text-xs font-black text-slate-900 block mt-0.5">Yearly Plan</span>
+            <span class="text-[11px] text-slate-600">365 Days Extension</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-1 text-xs">
+        <label class="block font-bold text-slate-700">Payment Reference / bKash / Nagad TrxID (Optional)</label>
+        <input type="text" id="sub-trx-note-input" oninput="refreshSubscriptionPreviewText()" placeholder="e.g. bKash TrxID 9H7A2K... or Paid via Nagad" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:border-emerald-500 focus:bg-white outline-hidden" />
+      </div>
+
+      <div id="sub-pending-notice" class="hidden p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-[11px] font-semibold flex items-center gap-2">
+        <i class="ph ph-clock-countdown text-base text-amber-600 shrink-0"></i>
+        <span>You already have a pending extension request in the admin queue.</span>
+      </div>
+
+      <div class="space-y-1 text-xs">
+        <label class="block text-[10px] font-bold uppercase text-slate-400">Message Preview to Admin (+8801540340852)</label>
+        <textarea id="sub-whatsapp-preview" rows="5" readonly class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-700 font-medium resize-none focus:outline-hidden"></textarea>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button type="button" onclick="submitSubscriptionRequest(true)" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-md flex items-center justify-center gap-2 transition">
+          <i class="ph ph-whatsapp-logo text-lg"></i>
+          <span>Submit Request & Open WhatsApp</span>
+        </button>
+        <div class="flex gap-2">
+          <button type="button" onclick="submitSubscriptionRequest(false)" class="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i class="ph ph-paper-plane-tilt text-sm"></i>
+            <span>Send In-App Request Only</span>
+          </button>
+          <button type="button" onclick="copySubscriptionWhatsAppMessage()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition" title="Copy Message">
+            <i class="ph ph-copy text-base"></i>
+            <span>Copy</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CUSTOM CONFIRMATION MODAL ================= -->
   <div id="modal-confirm-dialog" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3" style="display: none;">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 border border-slate-200 shadow-2xl space-y-4">
       <div class="flex items-start gap-3">
-        <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 text-lg">
+        <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg shrink-0">
           <i class="ph ph-warning-circle"></i>
         </div>
         <div>
-          <h3 class="text-sm font-extrabold text-slate-900">Please Confirm</h3>
+          <h3 class="text-sm font-extrabold text-slate-900">Confirm Action</h3>
           <p id="confirm-dialog-message" class="text-xs text-slate-600 mt-1">Are you sure?</p>
         </div>
       </div>
-      <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-        <button onclick="closeConfirmDialog()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition">Cancel</button>
-        <button id="confirm-dialog-yes-btn" class="px-4 py-2 brand-gradient text-white rounded-xl text-xs font-extrabold shadow-sm transition">Confirm</button>
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" onclick="closeConfirmDialog()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Cancel</button>
+        <button type="button" id="confirm-dialog-yes-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-extrabold shadow-xs">Confirm</button>
       </div>
     </div>
   </div>
@@ -1266,21 +1388,20 @@
           <h3 class="text-sm font-extrabold text-slate-900">Set Custom Expiry Date</h3>
           <p id="custom-exp-cafe-label" class="text-[11px] text-slate-500">Cafe</p>
         </div>
-        <button onclick="closeCustomExpiryModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700"><i class="ph ph-x text-base"></i></button>
+        <button type="button" onclick="closeCustomExpiryModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700"><i class="ph ph-x text-base"></i></button>
       </div>
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">New Expiry Date *</label>
-          <input type="date" id="custom-exp-date-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
-        </div>
-        <button onclick="submitCustomCafeExpiry()" class="w-full py-2.5 brand-gradient text-white rounded-xl font-bold shadow-md transition">
-          Update Subscription Expiry
-        </button>
+      <div class="space-y-1.5 text-xs">
+        <label class="block font-bold text-slate-700">New Expiration Date:</label>
+        <input type="date" id="custom-exp-date-input" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeCustomExpiryModal()" class="px-3.5 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">Cancel</button>
+        <button type="button" onclick="submitCustomCafeExpiry()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-extrabold">Save Expiry</button>
       </div>
     </div>
   </div>
 
-  <!-- ================= CONVERT TO EXPENSE AMOUNT MODAL ================= -->
+  <!-- ================= CONVERT BUYING ITEM TO EXPENSE MODAL ================= -->
   <div id="modal-convert-expense" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3" style="display: none;">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 border border-slate-200 shadow-2xl space-y-3.5">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
@@ -1288,16 +1409,15 @@
           <h3 class="text-sm font-extrabold text-slate-900">Record Purchase as Expense</h3>
           <p id="convert-exp-item-title" class="text-[11px] text-slate-500">Item</p>
         </div>
-        <button onclick="closeConvertExpenseModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700"><i class="ph ph-x text-base"></i></button>
+        <button type="button" onclick="closeConvertExpenseModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700"><i class="ph ph-x text-base"></i></button>
       </div>
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Actual Cost Paid (<span class="curr-sym">৳</span>)</label>
-          <input type="number" id="convert-exp-amount-input" min="1" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-900" />
-        </div>
-        <button onclick="submitConvertBuyingToExpense()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-md transition">
-          Save Expense & Mark Done
-        </button>
+      <div class="space-y-1.5 text-xs">
+        <label class="block font-bold text-slate-700">Actual Amount Paid (<span class="curr-sym">৳</span>):</label>
+        <input type="number" id="convert-exp-amount-input" min="1" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-rose-600" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeConvertExpenseModal()" class="px-3.5 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">Cancel</button>
+        <button type="button" onclick="submitConvertBuyingToExpense()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold">Save Expense</button>
       </div>
     </div>
   </div>
@@ -1626,6 +1746,9 @@
     let isDemoMode = false;
     let cafeId = null;
     let allCafesList = [];
+    let pendingSubRequests = [];
+    let subRequestsUnsubscriber = null;
+    let currentCafeHasPendingRequest = false;
 
     let cafeProfile = {
       name: 'My Cafe',
@@ -1724,6 +1847,18 @@
        ========================================================================= */
     let authMode = 'login';
 
+    function toggleAuthPasswordVisibility() {
+      const pwdInput = document.getElementById('auth-password');
+      const iconEl = document.getElementById('icon-toggle-auth-password');
+      const btnEl = document.getElementById('btn-toggle-auth-password');
+      if (!pwdInput || !iconEl) return;
+
+      const isHidden = pwdInput.type === 'password';
+      pwdInput.type = isHidden ? 'text' : 'password';
+      iconEl.className = isHidden ? 'ph ph-eye-slash text-base' : 'ph ph-eye text-base';
+      if (btnEl) btnEl.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    }
+
     function toggleAuthMode(mode) {
       authMode = mode;
       const loginTab = document.getElementById('auth-tab-login');
@@ -1818,9 +1953,9 @@
 
     function launchDemoPreviewMode() {
       isDemoMode = true;
-      isSuperAdminUser = true;
-      currentUser = { uid: 'demo_super_admin', email: SUPER_ADMIN_EMAIL };
-      cafeId = 'demo_super_admin';
+      isSuperAdminUser = false; // Demo mode is strictly a regular cafe owner preview
+      currentUser = { uid: 'demo_cafe_preview', email: 'demo@cafeos.app' };
+      cafeId = 'demo_cafe_preview';
 
       const trialEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const demoProf = {
@@ -1833,53 +1968,86 @@
         logoUrl: '',
         receiptFooter: 'THANK YOU FOR YOUR CRAVING!',
         startToken: 101,
-        ownerEmail: SUPER_ADMIN_EMAIL,
-        subscriptionStatus: 'active',
-        planName: 'Super Admin Demo',
+        ownerEmail: 'demo@cafeos.app',
+        subscriptionStatus: 'trial',
+        planName: 'Demo Trial',
         subscriptionEndsAt: trialEnd
       };
+
+      const now = new Date();
+      const todayStr = now.toLocaleDateString('en-GB');
+      const todayISO = now.toISOString().split('T')[0];
 
       customIcons = DEFAULT_CUSTOM_ICONS.map((ic, idx) => ({ ...ic, id: 'ic_' + idx }));
       liveCategories = JSON.parse(JSON.stringify(STARTER_CATEGORIES));
       liveMenu = JSON.parse(JSON.stringify(STARTER_MENU_ITEMS));
       liveAddons = JSON.parse(JSON.stringify(STARTER_ADDONS));
 
-      allCafesList = [
+      // Seed realistic sample orders & expenses so Reports/KDS/Expenses work immediately in Demo
+      orderHistory = [
         {
-          uid: 'demo_super_admin',
-          profile: demoProf,
-          ordersCount: 0,
-          totalSales: 0,
-          totalExp: 0,
-          daysLeft: 30,
-          isExpired: false
+          token: 102,
+          timestamp: now.toISOString(),
+          timeStr: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          dateStr: todayStr,
+          channel: 'Dine-In',
+          table: 'Table 3',
+          customer: 'Rafid',
+          items: [
+            { itemId: 'bpm', name: 'Big Patty Burger', variantName: null, addons: [{ id: 'add_cheese', name: 'Cheese Slice', price: 30 }], unitPrice: 229, qty: 1 },
+            { itemId: 'c-cold', name: 'Cold Coffee', variantName: 'Regular', addons: [], unitPrice: 60, qty: 2 }
+          ],
+          subtotal: 349,
+          discount: 0,
+          total: 349,
+          payment: 'Cash',
+          paymentStatus: 'Paid',
+          cashTendered: 500,
+          changeReturned: 151,
+          status: 'Preparing'
         },
         {
-          uid: 'demo_cafe_2',
-          profile: {
-            name: 'Bean & Brew Lounge',
-            subtitle: 'Dhanmondi',
-            address: 'Road 27, Dhanmondi, Dhaka',
-            phone: '+8801700000001',
-            currency: '৳',
-            theme: 'amber',
-            ownerEmail: 'beanbrew@example.com',
-            subscriptionStatus: 'trial',
-            planName: '30-Day Free Trial',
-            subscriptionEndsAt: new Date(Date.now() + 24 * 86400000).toISOString()
-          },
-          ordersCount: 18,
-          totalSales: 6450,
-          totalExp: 2100,
-          daysLeft: 24,
-          isExpired: false
+          token: 101,
+          timestamp: new Date(now.getTime() - 3600000).toISOString(),
+          timeStr: new Date(now.getTime() - 3600000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          dateStr: todayStr,
+          channel: 'Takeaway',
+          table: 'Counter',
+          customer: 'Walk-in',
+          items: [
+            { itemId: 'css', name: 'Chicken Sub Sandwich', variantName: null, addons: [], unitPrice: 150, qty: 2 }
+          ],
+          subtotal: 300,
+          discount: 20,
+          total: 280,
+          payment: 'Digital/Wallet',
+          paymentStatus: 'Paid',
+          cashTendered: 0,
+          changeReturned: 0,
+          status: 'Served'
         }
       ];
 
-      toggleSuperAdminNavVisibility(true);
+      expenseHistory = [
+        {
+          id: 'exp_demo_1',
+          title: 'Chicken Breast & Burger Buns',
+          amount: 1250,
+          category: 'Raw Materials',
+          paymentMethod: 'Cash Drawer',
+          timestamp: now.toISOString(),
+          timeStr: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          dateStr: todayStr,
+          dateISO: todayISO
+        }
+      ];
+
+      allCafesList = [];
+      toggleSuperAdminNavVisibility(false);
       applyCafeProfile(demoProf);
       launchCafeWorkspace(false);
-      showToast('Demo Preview Mode active (Super Admin + POS).');
+      switchTab('pos');
+      showToast('Demo Cafe Preview loaded!');
     }
 
     function toggleSuperAdminNavVisibility(show) {
@@ -1901,6 +2069,10 @@
       if (isDemoMode) return;
       unsubscribers.forEach(u => u());
       unsubscribers = [];
+      if (subRequestsUnsubscriber) {
+        subRequestsUnsubscriber();
+        subRequestsUnsubscriber = null;
+      }
 
       if (!user) {
         currentUser = null;
@@ -1962,10 +2134,8 @@
           }
         }
       } catch (err) {
-        console.warn('Auth profile check notice:', err);
-        document.getElementById('auth-screen').classList.remove('hidden');
-        document.getElementById('auth-login-box').classList.add('hidden');
-        document.getElementById('auth-onboarding-box').classList.remove('hidden');
+        console.error('Auth state initialization error:', err);
+        showToast('Connection error loading cafe profile.', 'ph-warning', true);
       }
     });
 
@@ -2075,35 +2245,38 @@
       const daysLeft = getRemainingDays(cafeProfile.subscriptionEndsAt);
       const endDateFormatted = cafeProfile.subscriptionEndsAt ? new Date(cafeProfile.subscriptionEndsAt).toLocaleDateString('en-GB') : 'Unlimited';
       const subBadge = document.getElementById('hdr-sub-badge');
-      if (isSuperAdminUser && cafeId === currentUser.uid) {
-        subBadge.innerText = isDemoMode ? 'Demo • Super Admin' : 'Super Admin';
-        subBadge.className = 'text-[10px] font-extrabold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-300';
+      const isTrial = (cafeProfile.subscriptionStatus || 'trial') === 'trial';
+      const safeDays = Math.max(0, daysLeft);
+
+      if (isDemoMode) {
+        subBadge.innerHTML = `<span>Demo Cafe • Upgrade</span><i class="ph ph-caret-right text-[9px]"></i>`;
+        subBadge.className = 'text-[9px] sm:text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-1.5 sm:px-2 py-0.5 rounded-full border border-indigo-200 shrink-0 inline-flex items-center gap-1 cursor-pointer transition';
+      } else if (isSuperAdminUser && cafeId === currentUser.uid) {
+        subBadge.innerHTML = `<span>Super Admin</span>`;
+        subBadge.className = 'text-[9px] sm:text-[10px] font-extrabold bg-amber-100 text-amber-800 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-300 shrink-0 inline-flex items-center gap-1';
+      } else if (isTrial) {
+        subBadge.innerHTML = `<span>Trial • ${safeDays}d left (Upgrade)</span><i class="ph ph-caret-right text-[9px]"></i>`;
+        subBadge.className = safeDays <= 5
+          ? 'text-[9px] sm:text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 px-1.5 sm:px-2 py-0.5 rounded-full border border-rose-200 shrink-0 inline-flex items-center gap-1 cursor-pointer transition'
+          : 'text-[9px] sm:text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-200 shrink-0 inline-flex items-center gap-1 cursor-pointer transition';
       } else {
-        subBadge.innerText = `${cafeProfile.planName || 'Trial'} • ${Math.max(0, daysLeft)}d left`;
-        subBadge.className = daysLeft <= 5
-          ? 'text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200'
-          : 'text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200';
+        const activePlanLabel = (cafeProfile.planName && !cafeProfile.planName.toLowerCase().includes('trial'))
+          ? cafeProfile.planName
+          : 'Pro Subscription';
+        subBadge.innerHTML = `<span>${activePlanLabel} • ${safeDays}d left to renew</span><i class="ph ph-caret-right text-[9px]"></i>`;
+        subBadge.className = safeDays <= 5
+          ? 'text-[9px] sm:text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 px-1.5 sm:px-2 py-0.5 rounded-full border border-rose-200 shrink-0 inline-flex items-center gap-1 cursor-pointer transition'
+          : 'text-[9px] sm:text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-200 shrink-0 inline-flex items-center gap-1 cursor-pointer transition';
       }
 
-      document.getElementById('set-plan-name').innerText = cafeProfile.planName || '30-Day Free Trial';
+      const displayPlanTitle = isTrial
+        ? (cafeProfile.planName || '30-Day Free Trial')
+        : ((cafeProfile.planName && !cafeProfile.planName.toLowerCase().includes('trial')) ? cafeProfile.planName : 'Active Pro Subscription');
+      document.getElementById('set-plan-name').innerText = displayPlanTitle;
       document.getElementById('set-plan-expiry').innerText = `Valid until: ${endDateFormatted}`;
-      document.getElementById('set-plan-days-left').innerText = daysLeft > 0 ? `${daysLeft} days remaining` : 'Expired';
-
-      const logoBox = document.getElementById('hdr-logo-box');
-      if (cafeProfile.logoUrl) {
-        logoBox.innerHTML = `<img src="${cafeProfile.logoUrl}" class="w-full h-full object-cover" alt="Logo" />`;
-      } else {
-        logoBox.innerText = (cafeProfile.name || 'C').charAt(0).toUpperCase();
-      }
-
-      document.querySelectorAll('.curr-sym').forEach(el => el.innerText = cafeProfile.currency);
-
-      document.getElementById('settings-uid-badge').innerText = `Cafe ID: ${cafeId.slice(0, 8)}...`;
-      document.getElementById('set-cafe-name').value = cafeProfile.name || '';
-      document.getElementById('set-cafe-subtitle').value = cafeProfile.subtitle || '';
-      document.getElementById('set-cafe-address').value = cafeProfile.address || '';
-      document.getElementById('set-cafe-phone').value = cafeProfile.phone || '';
-      document.getElementById('set-cafe-currency').value = cafeProfile.currency || '৳';
+      document.getElementById('set-plan-days-left').innerText = daysLeft > 0
+        ? (isTrial ? `${daysLeft} trial days remaining — tap to upgrade` : `${daysLeft} days left to renew subscription`)
+        : 'Subscription expired — renew now';
       document.getElementById('set-cafe-theme').value = cafeProfile.theme || 'rose';
       document.getElementById('set-cafe-logo').value = cafeProfile.logoUrl || '';
       document.getElementById('set-cafe-footer').value = cafeProfile.receiptFooter || 'THANK YOU FOR YOUR VISIT!';
@@ -2139,6 +2312,7 @@
       initDatesAndListeners();
 
       if (isSuperAdminUser) {
+        listenToSubscriptionRequests();
         loadAllCafesForSuperAdmin();
         if (openSuperAdminFirst) switchTab('superadmin');
       }
@@ -2179,8 +2353,302 @@
     }
 
     /* =========================================================================
-       6. SUPER ADMIN MANAGEMENT & CROSS-CAFE INSPECTION
+       5B. WHATSAPP & IN-APP SUBSCRIPTION APPLICATION & RENEWAL FLOW
        ========================================================================= */
+    const ADMIN_WHATSAPP_NUMBER = "8801540340852";
+    let selectedSubscriptionPlan = "Monthly Subscription (30 Days)";
+
+    function buildSubscriptionWhatsAppMessage(planLabel) {
+      const ownerMail = (currentUser && currentUser.email) ? currentUser.email : (cafeProfile.ownerEmail || 'Not provided');
+      const cName = cafeProfile.name || 'My Cafe';
+      const cId = cafeId || 'N/A';
+      const trxNote = (document.getElementById('sub-trx-note-input')?.value || '').trim();
+      const currentStatus = (cafeProfile.subscriptionStatus === 'trial')
+        ? `Free Trial (${Math.max(0, getRemainingDays(cafeProfile.subscriptionEndsAt))} days left)`
+        : `${cafeProfile.planName || 'Active Subscription'} (${Math.max(0, getRemainingDays(cafeProfile.subscriptionEndsAt))} days left)`;
+
+      return `Hello CafeOS Admin, I would like to apply for / renew my *${planLabel}*.\n\n` +
+             `• *Cafe Name:* ${cName}\n` +
+             `• *Owner Email:* ${ownerMail}\n` +
+             `• *Cafe ID:* ${cId}\n` +
+             `• *Current Status:* ${currentStatus}\n` +
+             (trxNote ? `• *Payment Ref / Note:* ${trxNote}\n\n` : `\n`) +
+             `Please extend my CafeOS subscription period. Thank you!`;
+    }
+
+    function refreshSubscriptionPreviewText() {
+      const previewEl = document.getElementById('sub-whatsapp-preview');
+      if (previewEl) previewEl.value = buildSubscriptionWhatsAppMessage(selectedSubscriptionPlan);
+    }
+
+    async function openSubscriptionApplyModal() {
+      if (isSuperAdminUser && cafeId === currentUser.uid) {
+        switchTab('superadmin');
+        return;
+      }
+      const ownerMail = (currentUser && currentUser.email) ? currentUser.email : (cafeProfile.ownerEmail || 'N/A');
+      const daysLeft = Math.max(0, getRemainingDays(cafeProfile.subscriptionEndsAt));
+      const statusText = cafeProfile.subscriptionStatus === 'trial'
+        ? `30-Day Trial (${daysLeft}d left)`
+        : `${cafeProfile.planName || 'Active Plan'} (${daysLeft}d left to renew)`;
+
+      document.getElementById('sub-modal-cafe').innerText = cafeProfile.name || 'My Cafe';
+      document.getElementById('sub-modal-email').innerText = ownerMail;
+      document.getElementById('sub-modal-status').innerText = statusText;
+      document.getElementById('sub-trx-note-input').value = '';
+
+      const noticeEl = document.getElementById('sub-pending-notice');
+      noticeEl.classList.add('hidden');
+      if (!isDemoMode && cafeId) {
+        try {
+          const existing = await db.collection('subscription_requests')
+            .where('cafeUid', '==', cafeId)
+            .where('status', '==', 'pending')
+            .get();
+          currentCafeHasPendingRequest = !existing.empty;
+          if (currentCafeHasPendingRequest) noticeEl.classList.remove('hidden');
+        } catch (err) {
+          console.warn('Pending request check:', err);
+        }
+      }
+
+      selectSubscriptionPlanOption('Monthly Subscription (30 Days)');
+      document.getElementById('modal-subscription-apply').style.display = 'flex';
+    }
+
+    function closeSubscriptionApplyModal() {
+      document.getElementById('modal-subscription-apply').style.display = 'none';
+    }
+
+    function selectSubscriptionPlanOption(planLabel) {
+      selectedSubscriptionPlan = planLabel;
+      const mBtn = document.getElementById('sub-opt-monthly');
+      const yBtn = document.getElementById('sub-opt-yearly');
+      if (planLabel.includes('Monthly')) {
+        mBtn.className = 'p-3 rounded-xl border-2 border-emerald-600 bg-emerald-50/70 text-left transition';
+        yBtn.className = 'p-3 rounded-xl border border-slate-200 hover:border-slate-300 text-left transition';
+      } else {
+        yBtn.className = 'p-3 rounded-xl border-2 border-emerald-600 bg-emerald-50/70 text-left transition';
+        mBtn.className = 'p-3 rounded-xl border border-slate-200 hover:border-slate-300 text-left transition';
+      }
+      refreshSubscriptionPreviewText();
+    }
+
+    async function saveSubscriptionRequestToFirestore(planLabel, trxNote = '') {
+      const requestedDays = planLabel.includes('Yearly') ? 365 : 30;
+      const ownerMail = (currentUser && currentUser.email) ? currentUser.email : (cafeProfile.ownerEmail || '');
+      const reqPayload = {
+        cafeUid: cafeId || 'unknown',
+        cafeName: cafeProfile.name || 'My Cafe',
+        ownerEmail: ownerMail,
+        phone: cafeProfile.phone || '',
+        requestedPlan: planLabel,
+        requestedDays,
+        trxNote: trxNote.trim(),
+        currentStatus: cafeProfile.subscriptionStatus || 'trial',
+        currentEndsAt: cafeProfile.subscriptionEndsAt || '',
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+
+      if (isDemoMode) {
+        pendingSubRequests.unshift({ id: 'req_demo_' + Date.now(), ...reqPayload });
+        return;
+      }
+
+      await db.collection('subscription_requests').add(reqPayload);
+    }
+
+    async function submitSubscriptionRequest(openWhatsApp = true) {
+      const trxNote = (document.getElementById('sub-trx-note-input')?.value || '').trim();
+      try {
+        await saveSubscriptionRequestToFirestore(selectedSubscriptionPlan, trxNote);
+        showToast('Extension request sent to Super Admin!');
+      } catch (err) {
+        console.error('Failed to log subscription request:', err);
+        showToast('Could not save in-app request, opening WhatsApp...', 'ph-warning', true);
+      }
+
+      if (openWhatsApp) {
+        const text = buildSubscriptionWhatsAppMessage(selectedSubscriptionPlan);
+        const waUrl = `https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+        window.open(waUrl, '_blank', 'noopener,noreferrer');
+      }
+      closeSubscriptionApplyModal();
+    }
+
+    async function submitRenewalFromLockScreen() {
+      const planLabel = 'Monthly Subscription (30 Days)';
+      try {
+        await saveSubscriptionRequestToFirestore(planLabel, 'Renewal requested from lockout screen');
+        showToast('Renewal request logged for Super Admin!');
+      } catch (err) {
+        console.warn('Lock screen request log notice:', err);
+      }
+      const text = buildSubscriptionWhatsAppMessage(planLabel);
+      const waUrl = `https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
+    }
+
+    function copySubscriptionWhatsAppMessage() {
+      const textarea = document.getElementById('sub-whatsapp-preview');
+      if (!textarea) return;
+      textarea.select();
+      textarea.setSelectionRange(0, 99999);
+      document.execCommand('copy');
+      showToast('Message copied! Paste in WhatsApp (+8801540340852).');
+    }
+
+    /* =========================================================================
+       6. SUPER ADMIN MANAGEMENT, REQUEST QUEUE & CROSS-CAFE INSPECTION
+       ========================================================================= */
+    function listenToSubscriptionRequests() {
+      if (!isSuperAdminUser || isDemoMode) return;
+      if (subRequestsUnsubscriber) subRequestsUnsubscriber();
+
+      subRequestsUnsubscriber = db.collection('subscription_requests')
+        .where('status', '==', 'pending')
+        .onSnapshot((snapshot) => {
+          pendingSubRequests = [];
+          snapshot.forEach(doc => {
+            pendingSubRequests.push({ id: doc.id, ...doc.data() });
+          });
+          pendingSubRequests.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+          renderSuperAdminRequestsPanel();
+        }, (err) => {
+          console.error('Subscription requests listener error:', err);
+        });
+    }
+
+    function renderSuperAdminRequestsPanel() {
+      const count = pendingSubRequests.length;
+      const kpiEl = document.getElementById('sa-kpi-pending-reqs');
+      const pillEl = document.getElementById('sa-requests-count-pill');
+      const tabBadge = document.getElementById('sa-req-badge');
+      const hdrBadge = document.getElementById('hdr-sa-req-badge');
+      const mobBadge = document.getElementById('m-sa-req-badge');
+      const listEl = document.getElementById('sa-requests-list');
+
+      if (kpiEl) kpiEl.innerText = count.toString();
+      if (pillEl) pillEl.innerText = `${count} pending`;
+
+      [tabBadge, hdrBadge, mobBadge].forEach(b => {
+        if (!b) return;
+        b.innerText = count.toString();
+        if (count > 0) b.classList.remove('hidden');
+        else b.classList.add('hidden');
+      });
+
+      if (!listEl) return;
+
+      if (count === 0) {
+        listEl.innerHTML = `
+          <div class="col-span-full text-center text-xs text-slate-500 py-4 bg-white/80 rounded-xl border border-amber-100">
+            No pending subscription requests right now.
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = pendingSubRequests.map(req => {
+        const days = req.requestedDays || (req.requestedPlan && req.requestedPlan.includes('Yearly') ? 365 : 30);
+        const planTitle = days >= 365 ? 'Pro Yearly' : 'Pro Monthly';
+        const timeFormatted = req.createdAt
+          ? `${new Date(req.createdAt).toLocaleDateString('en-GB')} ${new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+          : 'Just now';
+        const curEnd = req.currentEndsAt ? new Date(req.currentEndsAt).toLocaleDateString('en-GB') : 'N/A';
+
+        return `
+          <div class="bg-white rounded-xl border border-amber-200 p-3.5 shadow-2xs flex flex-col justify-between gap-2.5">
+            <div class="space-y-1">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="font-extrabold text-slate-900 text-xs block">${req.cafeName || 'Unnamed Cafe'}</span>
+                  <span class="text-[11px] text-slate-500 block">${req.ownerEmail || ''} ${req.phone ? `• ${req.phone}` : ''}</span>
+                </div>
+                <span class="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold text-[10px] shrink-0">
+                  +${days} Days (${planTitle})
+                </span>
+              </div>
+              <div class="text-[10px] text-slate-400">
+                Requested: <b>${timeFormatted}</b> • Current Expiry: <b>${curEnd}</b>
+              </div>
+              ${req.trxNote ? `
+                <div class="text-[11px] bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg border border-slate-200 font-medium">
+                  <span class="text-[10px] font-bold uppercase text-slate-400 mr-1">Ref/Note:</span>${req.trxNote}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+              <button type="button" onclick="approveSubscriptionRequest('${req.id}')" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs transition flex items-center justify-center gap-1 shadow-2xs">
+                <i class="ph ph-check-circle text-sm"></i>
+                <span>Approve & Extend (+${days}d)</span>
+              </button>
+              <button type="button" onclick="dismissSubscriptionRequest('${req.id}')" class="px-3 py-2 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-xl font-bold text-xs transition">
+                Dismiss
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function approveSubscriptionRequest(reqId) {
+      const req = pendingSubRequests.find(r => r.id === reqId);
+      if (!req) return;
+
+      const addDays = req.requestedDays || (req.requestedPlan && req.requestedPlan.includes('Yearly') ? 365 : 30);
+      const planLabel = addDays >= 365 ? 'Pro Yearly' : 'Pro Monthly';
+
+      try {
+        const cafeSnap = await db.collection('cafes').doc(req.cafeUid).get();
+        const existingProfile = (cafeSnap.exists && cafeSnap.data().profile) ? cafeSnap.data().profile : {
+          name: req.cafeName || 'Cafe',
+          ownerEmail: req.ownerEmail || '',
+          phone: req.phone || ''
+        };
+
+        const currentEnd = existingProfile.subscriptionEndsAt ? new Date(existingProfile.subscriptionEndsAt).getTime() : Date.now();
+        const baseTime = Math.max(Date.now(), currentEnd);
+        const newEndISO = new Date(baseTime + addDays * 24 * 60 * 60 * 1000).toISOString();
+
+        await db.collection('cafes').doc(req.cafeUid).set({
+          profile: {
+            ...existingProfile,
+            subscriptionStatus: 'active',
+            planName: planLabel,
+            subscriptionEndsAt: newEndISO
+          }
+        }, { merge: true });
+
+        await db.collection('subscription_requests').doc(reqId).update({
+          status: 'approved',
+          approvedAt: new Date().toISOString(),
+          approvedBy: currentUser.email || SUPER_ADMIN_EMAIL
+        });
+
+        showToast(`Approved & extended ${existingProfile.name} by ${addDays} days!`);
+        loadAllCafesForSuperAdmin();
+      } catch (err) {
+        console.error('Approve request error:', err);
+        showToast('Error approving request: ' + err.message, 'ph-warning', true);
+      }
+    }
+
+    async function dismissSubscriptionRequest(reqId) {
+      try {
+        await db.collection('subscription_requests').doc(reqId).update({
+          status: 'dismissed',
+          dismissedAt: new Date().toISOString()
+        });
+        showToast('Request dismissed.');
+      } catch (err) {
+        console.error('Dismiss request error:', err);
+        showToast('Error dismissing request.', 'ph-warning', true);
+      }
+    }
+
     async function loadAllCafesForSuperAdmin() {
       if (!isSuperAdminUser) return;
       if (isDemoMode) {
@@ -3031,10 +3499,6 @@
           orderHistory.unshift(newOrder);
           currentTokenNumber = assignedToken + 1;
           document.getElementById('ticket-number-display').innerText = `Token #${currentTokenNumber}`;
-          if (allCafesList[0]) {
-            allCafesList[0].ordersCount = orderHistory.length;
-            allCafesList[0].totalSales = orderHistory.reduce((s, o) => s + o.total, 0);
-          }
           renderKDS();
           renderReportsTable();
           updateReportsKPIs();

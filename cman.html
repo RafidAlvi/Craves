@@ -2401,12 +2401,17 @@
       noticeEl.classList.add('hidden');
       if (!isDemoMode && cafeId) {
         try {
-          const existing = await db.collection('subscription_requests')
-            .where('cafeUid', '==', cafeId)
-            .where('status', '==', 'pending')
-            .get();
-          currentCafeHasPendingRequest = !existing.empty;
-          if (currentCafeHasPendingRequest) noticeEl.classList.remove('hidden');
+          if (cafeProfile.pendingSubscriptionRequest && cafeProfile.pendingSubscriptionRequest.status === 'pending') {
+            currentCafeHasPendingRequest = true;
+            noticeEl.classList.remove('hidden');
+          } else {
+            const existing = await db.collection('subscription_requests')
+              .where('cafeUid', '==', cafeId)
+              .where('status', '==', 'pending')
+              .get();
+            currentCafeHasPendingRequest = !existing.empty;
+            if (currentCafeHasPendingRequest) noticeEl.classList.remove('hidden');
+          }
         } catch (err) {
           console.warn('Pending request check:', err);
         }
@@ -2437,7 +2442,9 @@
     async function saveSubscriptionRequestToFirestore(planLabel, trxNote = '') {
       const requestedDays = planLabel.includes('Yearly') ? 365 : 30;
       const ownerMail = (currentUser && currentUser.email) ? currentUser.email : (cafeProfile.ownerEmail || '');
+      const reqId = `req_${cafeId}_${Date.now()}`;
       const reqPayload = {
+        id: reqId,
         cafeUid: cafeId || 'unknown',
         cafeName: cafeProfile.name || 'My Cafe',
         ownerEmail: ownerMail,
@@ -2452,11 +2459,25 @@
       };
 
       if (isDemoMode) {
-        pendingSubRequests.unshift({ id: 'req_demo_' + Date.now(), ...reqPayload });
+        pendingSubRequests.unshift(reqPayload);
         return;
       }
 
-      await db.collection('subscription_requests').add(reqPayload);
+      // Always store inside the cafe's own scoped document & subcollection (covered by cafes/{cafeId}/{document=**})
+      await cafeDoc().set({
+        profile: {
+          ...cafeProfile,
+          pendingSubscriptionRequest: reqPayload
+        }
+      }, { merge: true });
+      await cafeCol('subscription_requests').doc(reqId).set(reqPayload);
+
+      // Also write to top-level subscription_requests queue if rules are published
+      try {
+        await db.collection('subscription_requests').doc(reqId).set(reqPayload);
+      } catch (topErr) {
+        console.warn('Top-level subscription_requests rule notice (saved inside cafe profile):', topErr.code);
+      }
     }
 
     async function submitSubscriptionRequest(openWhatsApp = true) {
@@ -2509,14 +2530,29 @@
       subRequestsUnsubscriber = db.collection('subscription_requests')
         .where('status', '==', 'pending')
         .onSnapshot((snapshot) => {
-          pendingSubRequests = [];
+          const map = new Map();
           snapshot.forEach(doc => {
-            pendingSubRequests.push({ id: doc.id, ...doc.data() });
+            map.set(doc.id, { id: doc.id, ...doc.data() });
           });
-          pendingSubRequests.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+          // Merge any pending requests stored directly inside cafe profiles
+          allCafesList.forEach(c => {
+            const pReq = c.profile && c.profile.pendingSubscriptionRequest;
+            if (pReq && pReq.status === 'pending') {
+              const key = pReq.id || `cafe_${c.uid}`;
+              if (!map.has(key)) map.set(key, { ...pReq, id: key, cafeUid: c.uid });
+            }
+          });
+          pendingSubRequests = Array.from(map.values())
+            .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
           renderSuperAdminRequestsPanel();
         }, (err) => {
-          console.error('Subscription requests listener error:', err);
+          console.warn('Top-level subscription_requests listener notice:', err.code);
+          // Fallback: pull pending requests from loaded cafe profiles
+          pendingSubRequests = allCafesList
+            .map(c => c.profile && c.profile.pendingSubscriptionRequest)
+            .filter(r => r && r.status === 'pending')
+            .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+          renderSuperAdminRequestsPanel();
         });
     }
 
@@ -2613,21 +2649,26 @@
         const baseTime = Math.max(Date.now(), currentEnd);
         const newEndISO = new Date(baseTime + addDays * 24 * 60 * 60 * 1000).toISOString();
 
-        await db.collection('cafes').doc(req.cafeUid).set({
-          profile: {
-            ...existingProfile,
-            subscriptionStatus: 'active',
-            planName: planLabel,
-            subscriptionEndsAt: newEndISO
-          }
-        }, { merge: true });
+        const updatedProfile = {
+          ...existingProfile,
+          subscriptionStatus: 'active',
+          planName: planLabel,
+          subscriptionEndsAt: newEndISO,
+          pendingSubscriptionRequest: null
+        };
 
-        await db.collection('subscription_requests').doc(reqId).update({
-          status: 'approved',
-          approvedAt: new Date().toISOString(),
-          approvedBy: currentUser.email || SUPER_ADMIN_EMAIL
-        });
+        await db.collection('cafes').doc(req.cafeUid).set({ profile: updatedProfile }, { merge: true });
 
+        try {
+          await db.collection('subscription_requests').doc(reqId).update({
+            status: 'approved',
+            approvedAt: new Date().toISOString(),
+            approvedBy: currentUser.email || SUPER_ADMIN_EMAIL
+          });
+        } catch (e) { /* Ignore if stored only on cafe profile */ }
+
+        pendingSubRequests = pendingSubRequests.filter(r => r.id !== reqId && r.cafeUid !== req.cafeUid);
+        renderSuperAdminRequestsPanel();
         showToast(`Approved & extended ${existingProfile.name} by ${addDays} days!`);
         loadAllCafesForSuperAdmin();
       } catch (err) {
@@ -2637,11 +2678,22 @@
     }
 
     async function dismissSubscriptionRequest(reqId) {
+      const req = pendingSubRequests.find(r => r.id === reqId);
       try {
-        await db.collection('subscription_requests').doc(reqId).update({
-          status: 'dismissed',
-          dismissedAt: new Date().toISOString()
-        });
+        if (req && req.cafeUid) {
+          await db.collection('cafes').doc(req.cafeUid).set({
+            profile: { pendingSubscriptionRequest: null }
+          }, { merge: true });
+        }
+        try {
+          await db.collection('subscription_requests').doc(reqId).update({
+            status: 'dismissed',
+            dismissedAt: new Date().toISOString()
+          });
+        } catch (e) { /* Ignore if stored only on cafe profile */ }
+
+        pendingSubRequests = pendingSubRequests.filter(r => r.id !== reqId);
+        renderSuperAdminRequestsPanel();
         showToast('Request dismissed.');
       } catch (err) {
         console.error('Dismiss request error:', err);
@@ -2708,6 +2760,15 @@
         document.getElementById('sa-kpi-expired-cafes').innerText = expiredCount.toString();
         document.getElementById('sa-kpi-platform-sales').innerText = `৳${platformSalesTotal.toLocaleString()}`;
 
+        // Merge any pending requests stored on cafe profiles
+        const existingUids = new Set(pendingSubRequests.map(r => r.cafeUid));
+        allCafesList.forEach(c => {
+          const pReq = c.profile && c.profile.pendingSubscriptionRequest;
+          if (pReq && pReq.status === 'pending' && !existingUids.has(c.uid)) {
+            pendingSubRequests.push({ ...pReq, id: pReq.id || `cafe_${c.uid}`, cafeUid: c.uid });
+          }
+        });
+        renderSuperAdminRequestsPanel();
         renderSuperAdminTable();
       } catch (err) {
         console.error('Super Admin load error:', err);
